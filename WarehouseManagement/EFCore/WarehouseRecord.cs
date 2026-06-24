@@ -13,7 +13,7 @@ public partial class WarehouseRecord
 
     public int ItemCount { get; set; }
 
-    public string Note { get; set; } = null!;
+    public string? Note { get; set; }
 
     public DateTime CreateTime { get; set; }
 
@@ -30,6 +30,8 @@ public partial class WarehouseRecord
     public bool IsDelete { get; set; }
 
     public int? Batch { get; set; }
+
+    public virtual ICollection<FixedAsset> FixedAssets { get; set; } = new List<FixedAsset>();
 
     public virtual ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
 

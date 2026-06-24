@@ -1,11 +1,17 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using DocumentFormat.OpenXml.Drawing.Charts;
+using DocumentFormat.OpenXml.ExtendedProperties;
+using DocumentFormat.OpenXml.InkML;
+using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using Microsoft.IdentityModel.Abstractions;
 using Microsoft.VisualBasic;
 using System.Net.WebSockets;
 using System.Security.Cryptography;
+using System.Xml.Linq;
 using WarehouseManagement.Controllers;
 using WarehouseManagement.EFCore;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -65,7 +71,9 @@ namespace WarehouseManagement.Controllers
                 var totalInfo = ctx.WarehouseRecords.Include(u => u.RecordType)
                   .Include(u => u.RecordState)
                   .Include(u => u.Item)
+                  .Include(u => u.User)
                   .Include(u => u.PlaceForStorageDetail)
+                  .ThenInclude(u => u.PlaceForStorage)
                   .Where(u => u.IsDelete == false)
                   .Select(u => new
                   {
@@ -80,8 +88,12 @@ namespace WarehouseManagement.Controllers
                       FinishedTime = u.FinishedTime,
                       UserId = u.UserId,
                       u.PlaceForStorageDetailId,
+                      PlaceForStorageDetailName = u.PlaceForStorageDetail.PlaceForStorage.Name + "-" + u.PlaceForStorageDetail.Name,
                       RecordState = u.RecordState.Name,
+                      UserName = u.UserId == null ? null : u.User.Name,
+                      ItemTypeId = u.Item.ItemTypeId,
                   }).ToList();
+
                 return Ok(new
                 {
                     Success = true,
@@ -129,6 +141,7 @@ namespace WarehouseManagement.Controllers
                         u.PlaceForStorageDetailId,
                         RecordState = u.RecordState.Name,
                     }).ToList();
+
             return Ok(new
             {
                 Success = true,
@@ -174,7 +187,30 @@ namespace WarehouseManagement.Controllers
                 };
                 ctx.WarehouseRecords.Add(addInfo);
                 ctx.SaveChanges();
-
+                if (ctx.Items.ToList().FirstOrDefault(u => u.Id == record.ItemId).IsFixedAssets == true)
+                {
+                    for (int i = 0; i < addInfo.ItemCount; i++)
+                    {
+                        var fixInfo = new FixedAsset
+                        {
+                            Code = DateTime.Now.Date.ToString("yyyyMMdd") + ctx.FixedAssets.OrderByDescending(u => u.Id).FirstOrDefault() == null ? 1.ToString("D6") : ctx.FixedAssets.OrderByDescending(u => u.Id).FirstOrDefault().Id.ToString("D6"),
+                            ItemId = record.ItemId,
+                            IsDelete = false
+                        };
+                        ctx.FixedAssets.Add(fixInfo);
+                        ctx.SaveChanges();
+                        ctx.AssetHistories.Add(new AssetHistory
+                        {
+                            FixedAssetId = fixInfo.Id,
+                            PlaceForStorageDetailId = addInfo.PlaceForStorageDetailId,
+                            UserId = record.UserId == null ? null : record.UserId,
+                            Note = record.Note,
+                            OperationTime = record.CreateTime,
+                            IsDelete = false
+                        });
+                        ctx.SaveChanges();
+                    }
+                }
                 return Ok(new
                 {
                     Success = true,
@@ -203,17 +239,6 @@ namespace WarehouseManagement.Controllers
             var ctx = new DB();
             try
             {
-                //if (!record.IsUserExistingItems)
-                //{
-                //    return BadRequest(new
-                //    {
-                //        success = false,
-                //        message = "",
-                //        Timestamp = DateTime.UtcNow,
-                //        Data = (string)null
-                //    });
-                //}
-
                 if (ctx.WarehouseRecords.Where(u => u.RecordTypeId == 2).Sum(u => u.ItemCount) - ctx.WarehouseRecords.Where(u => u.RecordTypeId == 1).Sum(u => u.ItemCount) < record.ItemCount)
                 {
                     return BadRequest(new
@@ -227,6 +252,7 @@ namespace WarehouseManagement.Controllers
 
                 var recordInfo = ctx.WarehouseRecords.ToList()
                     .FirstOrDefault(u => u.Id == record.Id);
+
                 if (recordInfo == null)
                 {
                     return BadRequest(new
@@ -515,53 +541,243 @@ namespace WarehouseManagement.Controllers
         public IActionResult ShowSearchRecord([FromBody] SearchData searchData)
         {
             var ctx = new DB();
+
+            var searchInfo = ctx.WarehouseRecords
+                .Include(u => u.RecordType)
+                .Include(u => u.Item)
+                .Include(u => u.RecordState)
+                .Include(u => u.User)
+                .Include(u => u.PlaceForStorageDetail)
+                .ThenInclude(u => u.PlaceForStorage).ToList()
+                .Where(u => u.IsDelete == false && searchData.UserId == 0 ? true :
+                u.UserId == searchData.UserId && searchData.ItemId == 0 ? true :
+                u.ItemId == searchData.ItemId && searchData.PlaceForStorageId == 0 ? true :
+                u.PlaceForStorageDetailId == searchData.PlaceForStorageId && (string.IsNullOrEmpty(searchData.StartTime) ||
+                 u.CreateTime >= Convert.ToDateTime(searchData.StartTime)) && (string.IsNullOrEmpty(searchData.EndTime) ||
+                 u.CreateTime <= Convert.ToDateTime(searchData.EndTime))
+                )
+                .Select(u => new
+                {
+                    Type = u.RecordType.Name,
+                    Item = u.Item.Name,
+                    Count = u.ItemCount,
+                    CreateTime = u.CreateTime,
+                    EndTime = u.EndTime,
+                    User = u.User == null ? null : u.User.Name,
+                    PlaceForStorage = u.PlaceForStorageDetail.PlaceForStorage.Name,
+                    Batch = u.Batch
+                }).ToList();
+            return Ok(new
+            {
+                Success = true,
+                Message = "",
+                Timestamp = DateTime.UtcNow,
+                Data = searchInfo
+            });
+
+
+            return BadRequest(new
+            {
+                Success = true,
+                Message = "is null",
+                Timestamp = DateTime.UtcNow,
+                Data = (string)null
+            });
+        }
+
+        //显示记录详情
+        [Route("showRecordDetail")]
+        [HttpPost]
+        public IActionResult ShowRecordDetail([FromBody] int id)
+        {
+            var ctx = new DB();
             try
             {
-                var searchInfo = ctx.WarehouseRecords
-                    .Include(u => u.RecordType)
-                    .Include(u => u.Item)
-                    .Include(u => u.RecordState)
-                    .Include(u => u.User)
-                    .Include(u => u.PlaceForStorageDetail).ToList()
-                    .Where(u => u.IsDelete == false &&
-                    u.UserId == searchData.UserId &&
-                    u.ItemId == searchData.ItemId &&
-                    u.PlaceForStorageDetailId == searchData.PlaceForStorage &&
-                     u.EndTime == searchData.EndTime &&
-                     u.CreateTime == searchData.StartTime
-                    )
-                    .Select(u => new
+                var recordInfo = ctx.WarehouseRecords.Include(u => u.Item)
+                   .Include(u => u.PlaceForStorageDetail)
+                   .Include(u => u.User)
+                   .Include(u => u.RecordState)
+                   .Include(u => u.RecordType)
+                   .FirstOrDefault(u => u.IsDelete == false && u.Id == id);
+                if (recordInfo == null)
+                {
+                    return BadRequest(new
                     {
-                        Type = u.RecordType,
-                        Item = u.Item.Name,
-                        Count = u.ItemCount,
-                        CreateTime = u.CreateTime,
-                        EndTime = u.EndTime,
-                        User = u.User.Name,
-                        PlaceForStorage = u.PlaceForStorageDetail.PlaceForStorage,
-                        Batch = u.Batch
-                    }).ToList();
+                        Success = false,
+                        Message = "",
+                        Timestamp = DateTime.UtcNow,
+                        Data = (string)null
+                    });
+                }
                 return Ok(new
                 {
-                    Success = false,
+                    Success = true,
                     Message = "",
                     Timestamp = DateTime.UtcNow,
-                    Data = searchInfo
+                    Data = new
+                    {
+                        Id = recordInfo.Id,
+                        ItemId = recordInfo.ItemId,
+                        ItemCount = recordInfo.ItemCount,
+                        PlaceForStorageDetailId = recordInfo.PlaceForStorageDetailId,
+                        RecordTypeId = recordInfo.RecordTypeId,
+                        RecordStateId = recordInfo.RecordStateId,
+                        EndTime = recordInfo.EndTime,
+                        CreateTime = recordInfo.CreateTime,
+                        FinishedTime = recordInfo.FinishedTime,
+                        UserId = recordInfo.UserId,
+                        IsDelete = recordInfo.IsDelete,
+                        Note = recordInfo.Note,
+                    }
                 });
             }
             catch
             {
                 return BadRequest(new
                 {
-                    Success = true,
-                    Message = "is null",
+                    Success = false,
+                    Message = "",
                     Timestamp = DateTime.UtcNow,
                     Data = (string)null
                 });
             }
         }
-    }
 
+        //显示我的未完成任务
+        [Route("showMyUnfinishedTasks")]
+        [HttpPost]
+        public IActionResult ShowMyUnfinishedTasks([FromBody] int userId)
+        {
+            var ctx = new DB();
+            try
+            {
+                var unfinishedInfo = ctx.WarehouseRecords.Include(u => u.RecordType)
+                 .Include(u => u.RecordState)
+                 .Include(u => u.Item)
+                 .Include(u => u.PlaceForStorageDetail)
+                 .Where(u => u.RecordStateId == 1 && u.IsDelete == false && u.UserId == userId)
+                 .Select(u => new
+                 {
+                     RecordId = u.Id,
+                     ItemName = u.Item.Name,
+                     ItemType = u.RecordType,
+                     ItemCount = u.ItemCount,
+
+                 }).ToList();
+
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "",
+                    TimeStamp = DateTime.UtcNow,
+                    Data = unfinishedInfo
+                });
+            }
+            catch
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    Message = "",
+                    TimeStamp = DateTime.UtcNow,
+                    Data = (string)null
+                });
+            }
+        }
+
+        //录入数据记录
+        [Route("showEnterDataRecord")]
+        [HttpPost]
+        public IActionResult ShowEnterDataRecord()
+        {
+            var ctx = new DB();
+            try
+            {
+                var recordInfo = ctx.WarehouseRecords.Include(u => u.RecordType)
+                 .Include(u => u.RecordState)
+                 .Include(u => u.Item)
+                 .Include(u => u.PlaceForStorageDetail)
+                 .Where(u => u.RecordStateId != 1 && u.UserId == null && u.IsDelete == false)
+                 .Select(u => new
+                 {
+                     RecordId = u.Id,
+                     ItemName = u.Item.Name,
+                     ItemType = u.RecordType,
+                     ItemCount = u.ItemCount,
+
+                 }).ToList();
+
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "",
+                    Timestamp = DateTime.UtcNow,
+                    Data = recordInfo
+                });
+            }
+            catch
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    Message = "",
+                    Timestamp = DateTime.UtcNow,
+                    Data = (string)null
+                });
+            }
+        }
+
+        //更新异常数据
+        //public void UpdateAbnormalData()
+        //{
+        //    var ctx = new DB();
+        //    try
+        //    {
+        //        var abnormalInfo = ctx.WarehouseRecords.Include(u => u.Item)
+        //            .Include(u => u.RecordType)
+        //            .Include(u => u.RecordState)
+        //            .Include(u => u.User)
+        //            .Include(u => u.PlaceForStorageDetail)
+        //            .ThenInclude(u => u.PlaceForStorage)
+        //            .Include(u => u.FixedAssets)
+        //            .Where(u => u.IsDelete == false)
+        //            .GroupBy(u => u.Item)
+        //            .Select(u => new
+        //            {
+        //                u.Key,
+        //                TotalCount = u.Sum(u => u.ItemCount),
+        //                SafeStock = ctx.Items.ToList().FirstOrDefault(c => c.Id == u.Key.Id).SafetyInventory
+        //            }).ToList();
+
+        //        foreach (var item in abnormalInfo)
+        //        {
+        //            if (item.TotalCount < item.SafeStock)
+        //            {
+        //                ctx.ItemAndStates.Add(new ItemAndState
+        //                {
+        //                    ItemId = item.Key.Id,
+        //                    HazardRecordDetailId = 1,
+        //                    HazardStateId = 1
+        //                });
+        //                ctx.SaveChanges();
+        //            }
+
+        //            if (ctx.WarehouseRecords.ToList().OrderBy(u =>u.CreateTime).FirstOrDefault(u => u.ItemId == item.Key.Id).CreateTime >= DateTime.Now)
+        //            {
+        //                ctx.WarehouseRecords.ToList().Add(new WarehouseRecord
+        //                {
+        //                    //RecordState =
+        //                });
+        //            }
+        //        }
+
+        //    }
+        //    catch
+        //    {
+        //        return;
+        //    }
+        //}
+    }
 }
 public class RecordData
 {
@@ -583,9 +799,14 @@ public class SearchData
 {
     public int UserId { set; get; }
     public int ItemId { set; get; }
-    public int PlaceForStorage { set; get; }
-    public DateTime StartTime { set; get; }
-    public DateTime EndTime { set; get; }
+    public int PlaceForStorageId { set; get; }
+    public string? StartTime { set; get; }
+    public string? EndTime { set; get; }
 
+}
+public class ToJson
+{
+    public string Key { get; set; }
+    public string Value { get; set; }
 }
 

@@ -52,6 +52,7 @@ namespace WarehouseManagement.Controllers
                 {
                     Id = loginInfo.Id,
                     RoleId = loginInfo.RoleId,
+                    UserName = loginInfo.Name
                 }
             });
         }

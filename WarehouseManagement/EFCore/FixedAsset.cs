@@ -13,7 +13,11 @@ public partial class FixedAsset
 
     public bool? IsDelete { get; set; }
 
+    public int? WarehouseRcordId { get; set; }
+
     public virtual ICollection<AssetHistory> AssetHistories { get; set; } = new List<AssetHistory>();
 
     public virtual Item Item { get; set; } = null!;
+
+    public virtual WarehouseRecord? WarehouseRcord { get; set; }
 }

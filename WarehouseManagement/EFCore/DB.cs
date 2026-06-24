@@ -86,6 +86,10 @@ public partial class DB : DbContext
                 .HasForeignKey(d => d.ItemId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_FixedAsset_Item");
+
+            entity.HasOne(d => d.WarehouseRcord).WithMany(p => p.FixedAssets)
+                .HasForeignKey(d => d.WarehouseRcordId)
+                .HasConstraintName("FK_FixedAsset_WarehouseRecords");
         });
 
         modelBuilder.Entity<HazardRecordDetail>(entity =>

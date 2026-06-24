@@ -1,11 +1,77 @@
 {
   "Version": 1,
-  "Hash": "FzWx9BBE75P6z5KtL+YYasIre6wif1Ae9oHmuADXF9U=",
+  "Hash": "rUnr2Y4vITU6qTaNGyUpGh9jPzxYWGrZgQ75MDla27M=",
   "Source": "WarehouseManagement",
   "BasePath": "_content/WarehouseManagement",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
-  "Assets": []
+  "DiscoveryPatterns": [
+    {
+      "Name": "WarehouseManagement\\wwwroot",
+      "Source": "WarehouseManagement",
+      "ContentRoot": "D:\\WarehouseManagement\\WarehouseManagement\\wwwroot\\",
+      "BasePath": "_content/WarehouseManagement",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "D:\\WarehouseManagement\\WarehouseManagement\\wwwroot\\src\\e33a7977-2f56-434f-8763-4bf889cc1d55.txt",
+      "SourceId": "WarehouseManagement",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\WarehouseManagement\\WarehouseManagement\\wwwroot\\",
+      "BasePath": "_content/WarehouseManagement",
+      "RelativePath": "src/e33a7977-2f56-434f-8763-4bf889cc1d55.txt",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\src\\e33a7977-2f56-434f-8763-4bf889cc1d55.txt"
+    },
+    {
+      "Identity": "D:\\WarehouseManagement\\WarehouseManagement\\wwwroot\\src\\p1.png",
+      "SourceId": "WarehouseManagement",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\WarehouseManagement\\WarehouseManagement\\wwwroot\\",
+      "BasePath": "_content/WarehouseManagement",
+      "RelativePath": "src/p1.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\src\\p1.png"
+    },
+    {
+      "Identity": "D:\\WarehouseManagement\\WarehouseManagement\\wwwroot\\src\\标签.xlsx",
+      "SourceId": "WarehouseManagement",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\WarehouseManagement\\WarehouseManagement\\wwwroot\\",
+      "BasePath": "_content/WarehouseManagement",
+      "RelativePath": "src/标签.xlsx",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\src\\标签.xlsx"
+    }
+  ]
 }
