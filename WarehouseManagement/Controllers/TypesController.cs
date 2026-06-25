@@ -8,9 +8,11 @@ namespace WarehouseManagement.Controllers
     [ApiController]
     public class TypesController : ControllerBase
     {
-        //显示物品类型列表
-        [Route("showAllType")]
-        [HttpGet]
+        /// <summary>
+        /// 显示物品类型列表
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("showAllType")]
         public IActionResult ShowAllType()
         {
             var ctx = new DB();

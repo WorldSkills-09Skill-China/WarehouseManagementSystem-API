@@ -18,6 +18,7 @@ using System.IO;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using System.Reflection.Metadata.Ecma335;
+using WarehouseManagement.ItemsClass;
 
 
 namespace WarehouseManagement.Controllers
@@ -28,9 +29,12 @@ namespace WarehouseManagement.Controllers
     {
         int _Batch;
         int _ItemId;
-        //显示物品详情
-        [Route("showItemDetail")]
-        [HttpPost]
+        /// <summary>
+        /// 显示物品详情
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost("showItemDetail")]
         public IActionResult ShowItemDetail([FromBody] int id)
         {
             var ctx = new DB();
@@ -69,9 +73,11 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //显示物品列表
-        [Route("showItemList")]
-        [HttpGet]
+        /// <summary>
+        /// 显示物品列表
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("showItemList")]
         public IActionResult ShowItemShow()
         {
             var ctx = new DB();
@@ -92,109 +98,111 @@ namespace WarehouseManagement.Controllers
         }
 
         //显示异常物品
-        [Route("showAbnormalItems")]
-        [HttpGet]
-        public IActionResult ShowAbnormalItems()
-        {
-            var ctx = new DB();
-            try
-            {
-                var abnormalInfo = ctx.Items
-                    .Include(u => u.WarehouseRecords)
-                    .Include(u => u.ItemAndStates)
-                    .ThenInclude(u => u.HazardRecordDetail)
-                    .Include(u => u.ItemType)
-                    .Where(u => u.ItemAndStates.Where(x => x.HazardStateId == 1).Count() > 0 && u.IsDelete == false)
-                    .Select(u => new
-                    {
-                        ItemId = u.Id,
-                        ItemName = u.Name,
-                        ItemType = u.ItemType.Name,
-                        ItemCount = u.WarehouseRecords.Where(u => u.IsDelete == false && u.RecordTypeId == 2).Sum(u => u.ItemCount) -
-                        u.WarehouseRecords.Where(u => u.IsDelete == false && u.RecordTypeId == 1).Sum(u => u.ItemCount),
-                        AbnormalCount = u.ItemAndStates.Where(x => x.HazardStateId == 1).Count(),
-                        ItemSafeCount = u.SafetyInventory,
-                    }).ToList();
+        //[Route("showAbnormalItems")]
+        //[HttpGet]
+        //public IActionResult ShowAbnormalItems()
+        //{
+        //    var ctx = new DB();
+        //    try
+        //    {
+        //        var abnormalInfo = ctx.Items
+        //            .Include(u => u.WarehouseRecords)
+        //            .ThenInclude(u => u.HazardRecordDetail)
+        //            .Include(u => u.ItemType)
+        //            .Where(u => u.ItemAndStates.Where(x => x.HazardStateId == 1).Count() > 0 && u.IsDelete == false)
+        //            .Select(u => new
+        //            {
+        //                ItemId = u.Id,
+        //                ItemName = u.Name,
+        //                ItemType = u.ItemType.Name,
+        //                ItemCount = u.WarehouseRecords.Where(u => u.IsDelete == false && u.RecordTypeId == 2).Sum(u => u.ItemCount) -
+        //                u.WarehouseRecords.Where(u => u.IsDelete == false && u.RecordTypeId == 1).Sum(u => u.ItemCount),
+        //                AbnormalCount = u.ItemAndStates.Where(x => x.HazardStateId == 1).Count(),
+        //                ItemSafeCount = u.SafetyInventory,
+        //            }).ToList();
 
-                return Ok(new
-                {
-                    Success = true,
-                    Message = "",
-                    Timestamp = DateTime.UtcNow,
-                    Data = abnormalInfo
-                });
-            }
-            catch
-            {
-                return BadRequest(new
-                {
-                    success = false,
-                    Message = "",
-                    Timestamp = DateTime.UtcNow,
-                    Data = (string)null
-                });
-            }
-        }
+        //        return Ok(new
+        //        {
+        //            Success = true,
+        //            Message = "",
+        //            Timestamp = DateTime.UtcNow,
+        //            Data = abnormalInfo
+        //        });
+        //    }
+        //    catch
+        //    {
+        //        return BadRequest(new
+        //        {
+        //            success = false,
+        //            Message = "",
+        //            Timestamp = DateTime.UtcNow,
+        //            Data = (string)null
+        //        });
+        //    }
+        //}
 
         //显示对应异常的解决方案
-        [Route("abnormalJudgmentProblem")]
-        [HttpPost]
-        public IActionResult AbnormalJudgmentProblem([FromBody] int id)
-        {
-            var ctx = new DB();
+        //[Route("abnormalJudgmentProblem")]
+        //[HttpPost]
+        //public IActionResult AbnormalJudgmentProblem([FromBody] int id)
+        //{
+        //    var ctx = new DB();
 
-            try
-            {
-                var abnormalInfo = ctx.ItemAndStates.Include(u => u.Item).Include(u => u.HazardRecordDetail)
-                               .Include(u => u.Item)
-                               .ToList()
-                               .Where(u => u.ItemId == id && u.HazardStateId == 1)
-                               .Select(u =>
-                               {
-                                   var amount = (ctx.WarehouseRecords.ToList().Where(u => u.ItemId == id && u.RecordTypeId == 2).Sum(u => u.ItemCount)) -
-                                  (ctx.WarehouseRecords.ToList().Where(u => u.ItemId == id && u.RecordTypeId == 1).Sum(u => u.ItemCount));
-                                   return new
-                                   {
-                                       ItemCount = u.HazardRecordDetailId == 2 ? (u.Item.SafetyInventory - amount) + 10 : amount,
-                                       Anomaly = u.HazardRecordDetail.Hint,
-                                       Type = u.HazardRecordDetailId == 2 ? false : true
-                                   };
-                               }).ToList();
+        //    try
+        //    {
+        //        var abnormalInfo = ctx.ItemAndStates.Include(u => u.Item).Include(u => u.HazardRecordDetail)
+        //                       .Include(u => u.Item)
+        //                       .ToList()
+        //                       .Where(u => u.ItemId == id && u.HazardStateId == 1)
+        //                       .Select(u =>
+        //                       {
+        //                           var amount = (ctx.WarehouseRecords.ToList().Where(u => u.ItemId == id && u.RecordTypeId == 2).Sum(u => u.ItemCount)) -
+        //                          (ctx.WarehouseRecords.ToList().Where(u => u.ItemId == id && u.RecordTypeId == 1).Sum(u => u.ItemCount));
+        //                           return new
+        //                           {
+        //                               ItemCount = u.HazardRecordDetailId == 2 ? (u.Item.SafetyInventory - amount) + 10 : amount,
+        //                               Anomaly = u.HazardRecordDetail.Hint,
+        //                               Type = u.HazardRecordDetailId == 2 ? false : true
+        //                           };
+        //                       }).ToList();
 
-                if (abnormalInfo == null)
-                {
-                    return BadRequest(new
-                    {
-                        Success = false,
-                        Message = "",
-                        Timestamp = DateTime.UtcNow,
-                        Data = (string)null
-                    });
-                }
+        //        if (abnormalInfo == null)
+        //        {
+        //            return BadRequest(new
+        //            {
+        //                Success = false,
+        //                Message = "",
+        //                Timestamp = DateTime.UtcNow,
+        //                Data = (string)null
+        //            });
+        //        }
 
-                return Ok(new
-                {
-                    Success = true,
-                    Message = "",
-                    Timestamp = DateTime.UtcNow,
-                    Data = abnormalInfo
-                });
-            }
-            catch
-            {
-                return BadRequest(new
-                {
-                    Success = false,
-                    Message = "",
-                    Timestamp = DateTime.UtcNow,
-                    Data = (string)null
-                });
-            }
-        }
+        //        return Ok(new
+        //        {
+        //            Success = true,
+        //            Message = "",
+        //            Timestamp = DateTime.UtcNow,
+        //            Data = abnormalInfo
+        //        });
+        //    }
+        //    catch
+        //    {
+        //        return BadRequest(new
+        //        {
+        //            Success = false,
+        //            Message = "",
+        //            Timestamp = DateTime.UtcNow,
+        //            Data = (string)null
+        //        });
+        //    }
+        //}
 
-        //显示所有的物品情况
-        [Route("showSearchItems")]
-        [HttpPost]
+        /// <summary>
+        /// 显示所有的物品情况
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        [HttpPost("showSearchItems")]
         public IActionResult ShowSearchItems([FromBody] SearchItems data)
         {
             var ctx = new DB();
@@ -232,9 +240,12 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //添加新的物品
-        [Route("addItems")]
-        [HttpPost]
+        /// <summary>
+        /// 添加新的物品
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        [HttpPost("addItems")]
         public IActionResult AddItems([FromBody] ItemData data)
         {
             var ctx = new DB();
@@ -286,9 +297,12 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //更改对应的物品
-        [Route("editItems")]
-        [HttpPost]
+        /// <summary>
+        /// 更改对应的物品
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        [HttpPost("editItems")]
         public IActionResult EditItems([FromBody] ItemData data)
         {
             var ctx = new DB();
@@ -357,9 +371,11 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //返回最大的固定资产的Id
-        [Route("showLargestFixedAsset")]
-        [HttpGet]
+        /// <summary>
+        /// 返回最大的固定资产的Id
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("showLargestFixedAsset")]
         public IActionResult ShowLargestFixedAsset()
         {
             var ctx = new DB();
@@ -388,9 +404,12 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //添加物品和记录
-        [Route("AddItemsAndRecord")]
-        [HttpPost]
+        /// <summary>
+        /// 添加物品和记录
+        /// </summary>
+        /// <param name="addData"></param>
+        /// <returns></returns>
+        [HttpPost("AddItemsAndRecord")]
         public IActionResult AddItemsAndRecord([FromBody] AddItemData addData)
         {
             var ctx = new DB();
@@ -425,7 +444,7 @@ namespace WarehouseManagement.Controllers
                         RecordStateId = 2,
                         UserId = 1,
                         PlaceForStorageDetailId = addData.PlaceForStorageDetailId,
-                        Batch = recordBatch
+                        Batch = (int)recordBatch
                     });
                     ctx.SaveChanges();
                     _Batch = (int)recordBatch;
@@ -478,9 +497,14 @@ namespace WarehouseManagement.Controllers
 
         }
 
-        //查看这个固定资产的所有的历史记录
-        [Route("showAssetHistory")]
-        [HttpGet]
+        /// <summary>
+        /// 查看这个固定资产的所有的历史记录
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="first"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
+        [HttpGet("showAssetHistory")]
         public IActionResult ShowAssetHistory(string id, DateTime first, DateTime end)
         {
             var ctx = new DB();
@@ -489,7 +513,7 @@ namespace WarehouseManagement.Controllers
                 var assetHistoryInfo = ctx.AssetHistories
                     .Include(u => u.User)
                     .Include(u => u.PlaceForStorageDetail)
-                    .ThenInclude(u =>u.PlaceForStorage)
+                    .ThenInclude(u => u.PlaceForStorage)
                     .Include(u => u.FixedAsset)
                     .ThenInclude(u => u.Item)
                     .Include(u => u.FixedAsset)
@@ -524,9 +548,12 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //查看某个固定资产
-        [Route("showFixedAsset")]
-        [HttpPost]
+        /// <summary>
+        /// 查看某个固定资产
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost("showFixedAsset")]
         public IActionResult ShowFixedAsset([FromBody] int id)
         {
             var ctx = new DB();
@@ -547,11 +574,11 @@ namespace WarehouseManagement.Controllers
                             Code = u.Code,
                             UserName = assetHistoryInfo == null ? null :
                             assetHistoryInfo.UserId == null ? null :
-                           assetHistoryInfo.User.Name,
+                            assetHistoryInfo.User.Name,
                             ItemName = u.Item.Name,
                             PlaceForStorageDetail = assetHistoryInfo == null ? null :
                             assetHistoryInfo.PlaceForStorageDetailId == null ? null :
-                             assetHistoryInfo.PlaceForStorageDetail.PlaceForStorage.Name + "-" +
+                            assetHistoryInfo.PlaceForStorageDetail.PlaceForStorage.Name + "-" +
                             assetHistoryInfo.PlaceForStorageDetail.Name,
                         };
                     }).ToList();
@@ -576,9 +603,12 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //删除某个固定资产
-        [Route("deleteFixedAsset")]
-        [HttpGet]
+        /// <summary>
+        /// 删除某个固定资产
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("deleteFixedAsset")]
         public IActionResult DeleteFixedAsset(int id)
         {
             var ctx = new DB();
@@ -618,9 +648,12 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //删除固定资产历史记录
-        [Route("deleteFixAssetHistory")]
-        [HttpGet]
+        /// <summary>
+        /// 删除固定资产历史记录
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("deleteFixAssetHistory")]
         public IActionResult DeleteFixAssetHistory(int id)
         {
             var ctx = new DB();
@@ -638,8 +671,6 @@ namespace WarehouseManagement.Controllers
                         Data = (string)null,
                     });
                 }
-
-                deleteHistoryInfo.IsDelete = true;
                 ctx.SaveChanges();
 
                 return Ok(new
@@ -662,9 +693,12 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //删除对应的物品
-        [Route("deleteItems")]
-        [HttpPost]
+        /// <summary>
+        /// 删除对应的物品
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost("deleteItems")]
         public IActionResult DeleteItems([FromBody] int id)
         {
             var ctx = new DB();
@@ -705,9 +739,12 @@ namespace WarehouseManagement.Controllers
 
         }
 
-        //显示物品的图片
-        [Route("showItemImage")]
-        [HttpPost]
+        /// <summary>
+        /// 显示物品的图片
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost("showItemImage")]
         public IActionResult ShowItemImage([FromBody] int id)
         {
             var ctx = new DB();
@@ -749,9 +786,12 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //更改固定资产的持有人
-        [Route("changeTheUser")]
-        [HttpPost]
+        /// <summary>
+        /// 更改固定资产的持有人
+        /// </summary>
+        /// <param name="change"></param>
+        /// <returns></returns>
+        [HttpPost("changeTheUser")]
         public IActionResult ChangeTheUser([FromBody] ChangeTheUser change)
         {
             var ctx = new DB();
@@ -764,7 +804,6 @@ namespace WarehouseManagement.Controllers
                     PlaceForStorageDetailId = fixedAssets.AssetHistories.OrderByDescending(u => u.OperationTime).FirstOrDefault(u => u.FixedAssetId == fixedAssets.Id).PlaceForStorageDetailId,
                     UserId = change.userId,
                     OperationTime = DateTime.Now,
-                    IsDelete = false
                 });
                 ctx.SaveChanges();
 
@@ -788,9 +827,12 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //查找固定资产对应的物品信息
-        [Route("searchThisCodeDetail")]
-        [HttpGet]
+        /// <summary>
+        /// 查找固定资产对应的物品信息
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        [HttpGet("searchThisCodeDetail")]
         public IActionResult SearchThisCodeDetail(string code)
         {
             var ctx = new DB();
@@ -836,52 +878,55 @@ namespace WarehouseManagement.Controllers
         }
 
         //是否未解决异常物品
-        [Route("unresolvedAbnormalItem")]
-        [HttpGet]
-        public IActionResult UnresolvedAbnormalItem()
-        {
-            var ctx = new DB();
-            try
-            {
-                var isExistingProblem = ctx.ItemAndStates.Include(u => u.HazardState)
-                    .ToList()
-                    .Any(u => u.HazardStateId == 1);
-                if (isExistingProblem)
-                {
-                    return Ok(new
-                    {
-                        Success = true,
-                        Message = "",
-                        Timestamp = DateTime.UtcNow,
-                        Data = false
-                    });
-                }
-                else
-                {
-                    return Ok(new
-                    {
-                        Success = true,
-                        Message = "",
-                        Timestamp = DateTime.UtcNow,
-                        Data = true
-                    });
-                }
-            }
-            catch
-            {
-                return BadRequest(new
-                {
-                    Success = false,
-                    Message = "",
-                    Timestamp = DateTime.UtcNow,
-                    Data = (string)null
-                });
-            }
-        }
+        //[Route("unresolvedAbnormalItem")]
+        //[HttpGet]
+        //public IActionResult UnresolvedAbnormalItem()
+        //{
+        //    var ctx = new DB();
+        //    try
+        //    {
+        //        var isExistingProblem = ctx.ItemAndStates.Include(u => u.HazardState)
+        //            .ToList()
+        //            .Any(u => u.HazardStateId == 1);
+        //        if (isExistingProblem)
+        //        {
+        //            return Ok(new
+        //            {
+        //                Success = true,
+        //                Message = "",
+        //                Timestamp = DateTime.UtcNow,
+        //                Data = false
+        //            });
+        //        }
+        //        else
+        //        {
+        //            return Ok(new
+        //            {
+        //                Success = true,
+        //                Message = "",
+        //                Timestamp = DateTime.UtcNow,
+        //                Data = true
+        //            });
+        //        }
+        //    }
+        //    catch
+        //    {
+        //        return BadRequest(new
+        //        {
+        //            Success = false,
+        //            Message = "",
+        //            Timestamp = DateTime.UtcNow,
+        //            Data = (string)null
+        //        });
+        //    }
+        //}
 
-        //批量导入数据
-        [Route("batchImportOfData")]
-        [HttpPost]
+        /// <summary>
+        /// 批量导入数据
+        /// </summary>
+        /// <param name="imports"></param>
+        /// <returns></returns>
+        [HttpPost("batchImportOfData")]
         public IActionResult BatchImportOfData([FromBody] List<ImportData> imports)
         {
             var ctx = new DB();
@@ -929,7 +974,6 @@ namespace WarehouseManagement.Controllers
                         UserId = 5,
                         Batch = ctx.WarehouseRecords.FirstOrDefault(u => u.ItemId == addItemInfo.Id) == null ? 1 :
                         ctx.WarehouseRecords.FirstOrDefault(u => u.ItemId == addItemInfo.Id).Batch + 1,
-                        IsDelete = false
                     };
                     ctx.WarehouseRecords.Add(warehouseRecordInfo);
                     ctx.SaveChanges();
@@ -965,32 +1009,11 @@ namespace WarehouseManagement.Controllers
                                 UserId = null,
                                 Note = warehouseRecordInfo.Note,
                                 OperationTime = DateTime.UtcNow,
-                                IsDelete = false,
                             });
                             ctx.SaveChanges();
                         };
-                        var wb = new XLWorkbook();
-                        var ws = wb.Worksheets.Add("Sheet1");
-                        ws.Cell(1, 1).Value = "";
-                        ws.Cell(1, 2).Value = "编码";
-                        ws.Cell(1, 3).Value = "物品名";
-                        ws.Cell(1, 4).Value = "批次";
-                        ws.Cell(1, 5).Value = "类型";
-                        ws.Cell(1, 6).Value = "创建时间";
 
-                        for (int i = 0; i < fixedAssetList.Count; i++)
-                        {
-                            ws.Cell(i + 2, 1).Value = "软件应用开发";
-                            ws.Cell(i + 2, 2).Value = fixedAssetList[i].Code;
-                            ws.Cell(i + 2, 3).Value = fixedAssetList[i].ItemName;
-                            ws.Cell(i + 2, 4).Value = fixedAssetList[i].Batch;
-                            ws.Cell(i + 2, 5).Value = fixedAssetList[i].TypeName;
-                            ws.Cell(i + 2, 6).Value = DateTime.Now.ToString("yyyy-MM-dd");
-                        }
-                        ws.Columns().AdjustToContents();
-                        var basePath = _whe.WebRootPath;
-                        var filepath = Path.Combine(basePath, "src", "标签.xlsx");
-                        wb.SaveAs(filepath);
+                        fixedAssetList.PrintALabel(_whe.WebRootPath);
                     }
                 }
 
@@ -1002,87 +1025,16 @@ namespace WarehouseManagement.Controllers
                     Data = (string)null
                 });
             }
-            catch (Exception ex)
+            catch
             {
                 return BadRequest(new
                 {
                     Success = false,
-                    Message = ex.Message,
+                    Message = "",
                     Timestamp = DateTime.UtcNow,
                     Data = (string)null
                 });
             }
         }
-    }
-    public class SearchItems
-    {
-        public int TypeId { get; set; }
-        public string ItemName { get; set; }
-    }
-    public class ChangeTheUser
-    {
-        public int userId { get; set; }
-        public string Code { get; set; }
-    }
-    public class ItemData
-    {
-        public int? Id { get; set; }
-        public string ItemName { get; set; }
-        public int ItemTypeId { get; set; }
-        public bool IsFixedAsset { get; set; }
-        public int SafeCount { get; set; }
-        public string ImageFileName { get; set; }
-        public List<AddFixedAsset>? AddFixedAssets { get; set; }
-        public List<DeleteFixedAsset>? DeleteFixedAssets { get; set; }
-    }
-
-    public class AddItemData
-    {
-        public string ItemName { get; set; }
-        public int TypeId { get; set; }
-        public int SafeCount { get; set; }
-        public int Count { get; set; }
-        public bool IsFixedAssets { get; set; }
-        public int PlaceForStorageDetailId { get; set; }
-        public List<AddFixedAsset>? AddFixedAssets { get; set; }
-    }
-
-    public class AddFixedAsset
-    {
-        public string Code { get; set; }
-        public int ItemId { get; set; }
-    }
-
-    public class DeleteFixedAsset
-    {
-        public string Code { get; set; }
-        public int ItemId { get; set; }
-    }
-
-    public class LableModel
-    {
-        public string Title { get; set; }
-        public string Code { get; set; }
-        public string Batch { get; set; }
-        public string Type { get; set; }
-        public string ItemName { get; set; }
-    }
-
-    public class ImportData
-    {
-        public string ItemName { get; set; }
-        public string ItemType { get; set; }
-        public int SafeCount { get; set; }
-        public int Count { get; set; }
-        public bool IsFixedAsset { get; set; }
-        public string PlaceForStorageDetail { get; set; }
-    }
-
-    public class FixedData
-    {
-        public int Batch { set; get; }
-        public string ItemName { get; set; }
-        public string TypeName { get; set; }
-        public string Code { get; set; }
     }
 }

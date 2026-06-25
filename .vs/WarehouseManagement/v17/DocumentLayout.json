@@ -5,6 +5,22 @@
     {
       "AbsoluteMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|d:\\warehousemanagement\\warehousemanagement\\controllers\\warehouserecordscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|solutionrelative:warehousemanagement\\controllers\\warehouserecordscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|d:\\warehousemanagement\\warehousemanagement\\efcore\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|solutionrelative:warehousemanagement\\efcore\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|d:\\warehousemanagement\\warehousemanagement\\controllers\\userscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|solutionrelative:warehousemanagement\\controllers\\userscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|d:\\warehousemanagement\\warehousemanagement\\controllers\\itemscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|solutionrelative:warehousemanagement\\controllers\\itemscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|d:\\warehousemanagement\\warehousemanagement\\tools.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|solutionrelative:warehousemanagement\\tools.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -14,8 +30,36 @@
       "DocumentGroups": [
         {
           "DockedWidth": 239,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 6,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Tools.cs",
+              "DocumentMoniker": "D:\\WarehouseManagement\\WarehouseManagement\\Tools.cs",
+              "RelativeDocumentMoniker": "WarehouseManagement\\Tools.cs",
+              "ToolTip": "D:\\WarehouseManagement\\WarehouseManagement\\Tools.cs",
+              "RelativeToolTip": "WarehouseManagement\\Tools.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAB4AAAA+AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-25T06:23:51.387Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "User.cs",
+              "DocumentMoniker": "D:\\WarehouseManagement\\WarehouseManagement\\EFCore\\User.cs",
+              "RelativeDocumentMoniker": "WarehouseManagement\\EFCore\\User.cs",
+              "ToolTip": "D:\\WarehouseManagement\\WarehouseManagement\\EFCore\\User.cs",
+              "RelativeToolTip": "WarehouseManagement\\EFCore\\User.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-25T13:15:29.053Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
@@ -26,15 +70,41 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "UsersController.cs",
+              "DocumentMoniker": "D:\\WarehouseManagement\\WarehouseManagement\\Controllers\\UsersController.cs",
+              "RelativeDocumentMoniker": "WarehouseManagement\\Controllers\\UsersController.cs",
+              "ToolTip": "D:\\WarehouseManagement\\WarehouseManagement\\Controllers\\UsersController.cs",
+              "RelativeToolTip": "WarehouseManagement\\Controllers\\UsersController.cs",
+              "ViewState": "AQIAACIAAAAAAAAAAAAgwEIAAAASAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-25T13:15:32.976Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ItemsController.cs",
+              "DocumentMoniker": "D:\\WarehouseManagement\\WarehouseManagement\\Controllers\\ItemsController.cs",
+              "RelativeDocumentMoniker": "WarehouseManagement\\Controllers\\ItemsController.cs",
+              "ToolTip": "D:\\WarehouseManagement\\WarehouseManagement\\Controllers\\ItemsController.cs",
+              "RelativeToolTip": "WarehouseManagement\\Controllers\\ItemsController.cs",
+              "ViewState": "AQIAAFsDAAAAAAAAAAAqwAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-25T12:29:35.671Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 0,
               "Title": "WarehouseRecordsController.cs",
               "DocumentMoniker": "D:\\WarehouseManagement\\WarehouseManagement\\Controllers\\WarehouseRecordsController.cs",
               "RelativeDocumentMoniker": "WarehouseManagement\\Controllers\\WarehouseRecordsController.cs",
               "ToolTip": "D:\\WarehouseManagement\\WarehouseManagement\\Controllers\\WarehouseRecordsController.cs",
               "RelativeToolTip": "WarehouseManagement\\Controllers\\WarehouseRecordsController.cs",
-              "ViewState": "AQIAAKYAAAAAAAAAAAAAwJoCAAAAAAAA",
+              "ViewState": "AQIAACIBAAAAAAAAAAAnwC4BAAAoAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-21T01:23:01.233Z",
+              "WhenOpened": "2026-06-25T12:29:01.029Z",
               "EditorCaption": ""
             }
           ]

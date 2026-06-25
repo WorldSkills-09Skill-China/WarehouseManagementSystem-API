@@ -181,3 +181,4 @@ D:\WarehouseManagement\WarehouseManagement\bin\Release\net8.0\RBush.dll
 D:\WarehouseManagement\WarehouseManagement\bin\Release\net8.0\SixLabors.Fonts.dll
 D:\WarehouseManagement\WarehouseManagement\bin\Release\net8.0\System.IO.Packaging.dll
 D:\WarehouseManagement\WarehouseManagement\bin\Release\net8.0\WarehouseManagement.staticwebassets.runtime.json
+D:\WarehouseManagement\WarehouseManagement\bin\Release\net8.0\Newtonsoft.Json.dll

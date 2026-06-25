@@ -47,6 +47,7 @@ D:\WarehouseManagement\WarehouseManagement\obj\Release\net8.0\PubTmp\Out\Microso
 D:\WarehouseManagement\WarehouseManagement\obj\Release\net8.0\PubTmp\Out\Microsoft.OpenApi.dll
 D:\WarehouseManagement\WarehouseManagement\obj\Release\net8.0\PubTmp\Out\Microsoft.SqlServer.Server.dll
 D:\WarehouseManagement\WarehouseManagement\obj\Release\net8.0\PubTmp\Out\Microsoft.Win32.SystemEvents.dll
+D:\WarehouseManagement\WarehouseManagement\obj\Release\net8.0\PubTmp\Out\Newtonsoft.Json.dll
 D:\WarehouseManagement\WarehouseManagement\obj\Release\net8.0\PubTmp\Out\QRCoder.dll
 D:\WarehouseManagement\WarehouseManagement\obj\Release\net8.0\PubTmp\Out\QuestPDF.dll
 D:\WarehouseManagement\WarehouseManagement\obj\Release\net8.0\PubTmp\Out\RBush.dll

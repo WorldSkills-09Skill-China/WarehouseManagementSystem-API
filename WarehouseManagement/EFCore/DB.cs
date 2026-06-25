@@ -17,31 +17,33 @@ public partial class DB : DbContext
 
     public virtual DbSet<AssetHistory> AssetHistories { get; set; }
 
+    public virtual DbSet<Exception> Exceptions { get; set; }
+
+    public virtual DbSet<ExceptionState> ExceptionStates { get; set; }
+
+    public virtual DbSet<ExceptionType> ExceptionTypes { get; set; }
+
     public virtual DbSet<FixedAsset> FixedAssets { get; set; }
 
-    public virtual DbSet<HazardRecordDetail> HazardRecordDetails { get; set; }
-
-    public virtual DbSet<HazardState> HazardStates { get; set; }
-
-    public virtual DbSet<Inventory> Inventories { get; set; }
+    public virtual DbSet<FixedAssetDetail> FixedAssetDetails { get; set; }
 
     public virtual DbSet<Item> Items { get; set; }
 
-    public virtual DbSet<ItemAndState> ItemAndStates { get; set; }
-
     public virtual DbSet<ItemType> ItemTypes { get; set; }
+
+    public virtual DbSet<Maintain> Maintains { get; set; }
 
     public virtual DbSet<PlaceForStorage> PlaceForStorages { get; set; }
 
     public virtual DbSet<PlaceForStorageDetail> PlaceForStorageDetails { get; set; }
-
-    public virtual DbSet<PlaceForStorageDetailState> PlaceForStorageDetailStates { get; set; }
 
     public virtual DbSet<RecordType> RecordTypes { get; set; }
 
     public virtual DbSet<ReocordState> ReocordStates { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
+
+    public virtual DbSet<TargetType> TargetTypes { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -74,6 +76,45 @@ public partial class DB : DbContext
                 .HasConstraintName("FK_AssetHistory_User");
         });
 
+        modelBuilder.Entity<Exception>(entity =>
+        {
+            entity.ToTable("Exception");
+
+            entity.Property(e => e.CreateTime).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Batch).WithMany(p => p.Exceptions)
+                .HasForeignKey(d => d.BatchId)
+                .HasConstraintName("FK_Exception_Exception");
+
+            entity.HasOne(d => d.ExceptionState).WithMany(p => p.Exceptions)
+                .HasForeignKey(d => d.ExceptionStateId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Exception_ExceptionState");
+
+            entity.HasOne(d => d.ExceptionType).WithMany(p => p.Exceptions)
+                .HasForeignKey(d => d.ExceptionTypeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Exception_ExceptionType");
+
+            entity.HasOne(d => d.FixedAsset).WithMany(p => p.Exceptions)
+                .HasForeignKey(d => d.FixedAssetId)
+                .HasConstraintName("FK_Exception_FixedAsset");
+        });
+
+        modelBuilder.Entity<ExceptionState>(entity =>
+        {
+            entity.ToTable("ExceptionState");
+
+            entity.Property(e => e.State).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<ExceptionType>(entity =>
+        {
+            entity.ToTable("ExceptionType");
+
+            entity.Property(e => e.Problem).HasMaxLength(50);
+        });
+
         modelBuilder.Entity<FixedAsset>(entity =>
         {
             entity.ToTable("FixedAsset");
@@ -81,6 +122,10 @@ public partial class DB : DbContext
             entity.Property(e => e.Code)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+
+            entity.HasOne(d => d.FixedAssetDetail).WithMany(p => p.FixedAssets)
+                .HasForeignKey(d => d.FixedAssetDetailId)
+                .HasConstraintName("FK_FixedAsset_FixedAssetDetail");
 
             entity.HasOne(d => d.Item).WithMany(p => p.FixedAssets)
                 .HasForeignKey(d => d.ItemId)
@@ -92,43 +137,11 @@ public partial class DB : DbContext
                 .HasConstraintName("FK_FixedAsset_WarehouseRecords");
         });
 
-        modelBuilder.Entity<HazardRecordDetail>(entity =>
+        modelBuilder.Entity<FixedAssetDetail>(entity =>
         {
-            entity.ToTable("HazardRecordDetail");
+            entity.ToTable("FixedAssetDetail");
 
-            entity.Property(e => e.Hint).HasMaxLength(50);
-        });
-
-        modelBuilder.Entity<HazardState>(entity =>
-        {
-            entity.ToTable("HazardState");
-
-            entity.Property(e => e.Name).HasMaxLength(50);
-        });
-
-        modelBuilder.Entity<Inventory>(entity =>
-        {
-            entity.HasKey(e => e.Code).HasName("PK_Inventory_1");
-
-            entity.ToTable("Inventory");
-
-            entity.Property(e => e.Code)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-
-            entity.HasOne(d => d.Item).WithMany(p => p.Inventories)
-                .HasForeignKey(d => d.ItemId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Inventory_Item");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Inventories)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK_Inventory_User");
-
-            entity.HasOne(d => d.WarehouseRecord).WithMany(p => p.Inventories)
-                .HasForeignKey(d => d.WarehouseRecordId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Inventory_WarehouseRecords");
+            entity.Property(e => e.Specification).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Item>(entity =>
@@ -137,29 +150,12 @@ public partial class DB : DbContext
 
             entity.Property(e => e.Image).HasMaxLength(100);
             entity.Property(e => e.Name).HasMaxLength(50);
+            entity.Property(e => e.Unit).HasMaxLength(50);
 
             entity.HasOne(d => d.ItemType).WithMany(p => p.Items)
                 .HasForeignKey(d => d.ItemTypeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Item_ItemType");
-        });
-
-        modelBuilder.Entity<ItemAndState>(entity =>
-        {
-            entity.ToTable("ItemAndState");
-
-            entity.HasOne(d => d.HazardRecordDetail).WithMany(p => p.ItemAndStates)
-                .HasForeignKey(d => d.HazardRecordDetailId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ItemAndState_ItemState");
-
-            entity.HasOne(d => d.HazardState).WithMany(p => p.ItemAndStates)
-                .HasForeignKey(d => d.HazardStateId)
-                .HasConstraintName("FK_ItemAndState_HazardState");
-
-            entity.HasOne(d => d.Item).WithMany(p => p.ItemAndStates)
-                .HasForeignKey(d => d.ItemId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ItemAndState_ItemAndState");
         });
 
         modelBuilder.Entity<ItemType>(entity =>
@@ -169,6 +165,13 @@ public partial class DB : DbContext
             entity.ToTable("ItemType");
 
             entity.Property(e => e.Name).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<Maintain>(entity =>
+        {
+            entity.ToTable("Maintain");
+
+            entity.Property(e => e.Note).HasMaxLength(50);
         });
 
         modelBuilder.Entity<PlaceForStorage>(entity =>
@@ -189,18 +192,6 @@ public partial class DB : DbContext
                 .HasForeignKey(d => d.PlaceForStorageId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_PlaceForStorageDetail_PlaceForStorage");
-
-            entity.HasOne(d => d.State).WithMany(p => p.PlaceForStorageDetails)
-                .HasForeignKey(d => d.StateId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_PlaceForStorageDetail_PlaceForStorageDetailState");
-        });
-
-        modelBuilder.Entity<PlaceForStorageDetailState>(entity =>
-        {
-            entity.ToTable("PlaceForStorageDetailState");
-
-            entity.Property(e => e.Name).HasMaxLength(50);
         });
 
         modelBuilder.Entity<RecordType>(entity =>
@@ -220,6 +211,13 @@ public partial class DB : DbContext
         modelBuilder.Entity<Role>(entity =>
         {
             entity.ToTable("Role");
+
+            entity.Property(e => e.Name).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<TargetType>(entity =>
+        {
+            entity.ToTable("TargetType");
 
             entity.Property(e => e.Name).HasMaxLength(50);
         });
@@ -253,7 +251,6 @@ public partial class DB : DbContext
 
             entity.HasOne(d => d.PlaceForStorageDetail).WithMany(p => p.WarehouseRecords)
                 .HasForeignKey(d => d.PlaceForStorageDetailId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_WarehouseRecords_WarehouseRecords1");
 
             entity.HasOne(d => d.RecordState).WithMany(p => p.WarehouseRecords)

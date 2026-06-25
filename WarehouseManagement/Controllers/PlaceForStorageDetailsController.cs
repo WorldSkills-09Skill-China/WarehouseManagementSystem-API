@@ -9,9 +9,11 @@ namespace WarehouseManagement.Controllers
     [ApiController]
     public class PlaceForStorageDetailsController : ControllerBase
     {
-        //显示所有的位置列表
-        [Route("showAllLocation")]
-        [HttpGet]
+        /// <summary>
+        /// 显示所有的位置列表
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("showAllLocation")]
         public IActionResult ShowAllLocation()
         {
             var ctx = new DB();
@@ -44,9 +46,12 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //显示位置对应的图片
-        [Route("showLocationImage")]
-        [HttpPost]
+        /// <summary>
+        /// 显示位置对应的图片
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost("showLocationImage")]
         public IActionResult ShowLocationImage([FromBody] int id)
         {
             var ctx = new DB();

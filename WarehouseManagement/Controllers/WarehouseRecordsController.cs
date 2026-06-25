@@ -27,8 +27,7 @@ namespace WarehouseManagement.Controllers
         /// 显示出库和入库的对应数量
         /// </summary>
         /// <returns></returns>
-        [Route("showDeliveryAndStorageCount")]
-        [HttpGet]
+        [HttpGet("showDeliveryAndStorageCount")]
         public IActionResult ShowDeliveryAndStorageCount()
         {
             try
@@ -68,8 +67,7 @@ namespace WarehouseManagement.Controllers
         /// 显示总的出入库记录
         /// </summary>
         /// <returns></returns>
-        [Route("showTotalRecord")]
-        [HttpGet]
+        [HttpGet("showTotalRecord")]
         public IActionResult ShowTotalRecord()
         {
             var ctx = new DB();
@@ -126,8 +124,7 @@ namespace WarehouseManagement.Controllers
         /// 显示未完成的任务
         /// </summary>
         /// <returns></returns>
-        [Route("showUnFinishedTask")]
-        [HttpGet]
+        [HttpGet("showUnFinishedTask")]
         public IActionResult ShowUnFinishedTask()
         {
             var ctx = new DB();
@@ -166,8 +163,7 @@ namespace WarehouseManagement.Controllers
         /// </summary>
         /// <param name="record"></param>
         /// <returns></returns>
-        [Route("addRecord")]
-        [HttpPost]
+        [HttpPost("addRecord")]
         public IActionResult AddRecord([FromBody] RecordData record)
         {
             var ctx = new DB();
@@ -248,8 +244,7 @@ namespace WarehouseManagement.Controllers
         /// </summary>
         /// <param name="record"></param>
         /// <returns></returns>
-        [Route("editRecord")]
-        [HttpPost]
+        [HttpPost("editRecord")]
         public IActionResult EditRecord([FromBody] RecordData record)
         {
             var ctx = new DB();
@@ -317,8 +312,7 @@ namespace WarehouseManagement.Controllers
         /// </summary>
         /// <param name="record"></param>
         /// <returns></returns>
-        [Route("applicationRecord")]
-        [HttpPost]
+        [HttpPost("applicationRecord")]
         public IActionResult ApplicationRecord([FromBody] RecordData record)
         {
             var ctx = new DB();
@@ -411,8 +405,7 @@ namespace WarehouseManagement.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [Route("deleteTheTask")]
-        [HttpPost]
+        [HttpPost("deleteTheTask")]
         public IActionResult DeleteTheTask([FromBody] int id)
         {
             var ctx = new DB();
@@ -434,8 +427,7 @@ namespace WarehouseManagement.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [Route("approvalTask")]
-        [HttpPost]
+        [HttpPost("approvalTask")]
         public IActionResult ApprovalTask([FromBody] int id)
         {
             var ctx = new DB();
@@ -459,8 +451,7 @@ namespace WarehouseManagement.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [Route("showTaskDetail")]
-        [HttpPost]
+        [HttpPost("showTaskDetail")]
         public IActionResult showTaskDetail([FromBody] int id)
         {
             var ctx = new DB();
@@ -516,8 +507,7 @@ namespace WarehouseManagement.Controllers
         /// 显示最近的50条数据
         /// </summary>
         /// <returns></returns>
-        [Route("show50Record")]
-        [HttpGet]
+        [HttpGet("show50Record")]
         public IActionResult Show50Record()
         {
             var ctx = new DB();
@@ -573,8 +563,7 @@ namespace WarehouseManagement.Controllers
         /// </summary>
         /// <param name="searchData"></param>
         /// <returns></returns>
-        [Route("showSearchRecord")]
-        [HttpPost]
+        [HttpPost("showSearchRecord")]
         public IActionResult ShowSearchRecord([FromBody] SearchData searchData)
         {
             var ctx = new DB();
@@ -627,8 +616,7 @@ namespace WarehouseManagement.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [Route("showRecordDetail")]
-        [HttpPost]
+        [HttpPost("showRecordDetail")]
         public IActionResult ShowRecordDetail([FromBody] int id)
         {
             var ctx = new DB();
@@ -688,8 +676,7 @@ namespace WarehouseManagement.Controllers
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
-        [Route("showMyUnfinishedTasks")]
-        [HttpPost]
+        [HttpPost("showMyUnfinishedTasks")]
         public IActionResult ShowMyUnfinishedTasks([FromBody] int userId)
         {
             var ctx = new DB();
@@ -733,8 +720,7 @@ namespace WarehouseManagement.Controllers
         /// 录入数据记录
         /// </summary>
         /// <returns></returns>
-        [Route("showEnterDataRecord")]
-        [HttpPost]
+        [HttpPost("showEnterDataRecord")]
         public IActionResult ShowEnterDataRecord()
         {
             var ctx = new DB();
@@ -773,6 +759,56 @@ namespace WarehouseManagement.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// 显示所有的待审批任务
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("displayAllTaskAwaitingReview")]
+        public IActionResult DisplayAllTaskAwaitingReview()
+        {
+            var ctx = new DB();
+            try
+            {
+                var reviewTask = ctx.WarehouseRecords
+                    .Include(u => u.User)
+                    .Include(u => u.PlaceForStorageDetail)
+                    .ThenInclude(u => u.PlaceForStorage)
+                    .Include(u => u.Item)
+                    .ToList()
+                    .Where(u => u.RecordStateId == 4)
+                    .Select(u => new
+                    {
+                        u.Id,
+                        Type = u.RecordType,
+                        ItemName = u.Item.Name,
+                        Count = u.ItemCount,
+                        PlaceForStorage = u.PlaceForStorageDetail == null ? null : u.PlaceForStorageDetail.PlaceForStorage.Name + "-" + u.PlaceForStorageDetail.Name,
+                        User = u.User == null ? null : u.User.Name,
+                        EndTime = u.EndTime.ToString(),
+                        Unit = u.Item.Unit
+                    }).ToList();
+
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "",
+                    Timestamp = DateTime.UtcNow,
+                    Data = reviewTask
+                });
+            }
+            catch
+            {
+                return BadRequest(new
+                {
+                    Success = true,
+                    Message = "",
+                    Timestamp = DateTime.UtcNow,
+                    Data = -1
+                });
+            }
+        }
+
 
         //更新异常数据
         //public void UpdateAbnormalData()

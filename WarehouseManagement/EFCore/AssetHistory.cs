@@ -17,8 +17,6 @@ public partial class AssetHistory
 
     public DateTime OperationTime { get; set; }
 
-    public bool? IsDelete { get; set; }
-
     public virtual FixedAsset FixedAsset { get; set; } = null!;
 
     public virtual PlaceForStorageDetail? PlaceForStorageDetail { get; set; }

@@ -9,9 +9,11 @@ namespace WarehouseManagement.Controllers
     [ApiController]
     public class RecordTypesValuesController : ControllerBase
     {
-        //显示记录类型
-        [Route("showRecordType")]
-        [HttpGet]
+        /// <summary>
+        /// 显示记录类型
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("showRecordType")]
         public IActionResult ShowRecordType()
         {
             try
