@@ -14,6 +14,7 @@ using System.Security.Cryptography;
 using System.Xml.Linq;
 using WarehouseManagement.Controllers;
 using WarehouseManagement.EFCore;
+using WarehouseManagement.WarehouseRecordsClass;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WarehouseManagement.Controllers
@@ -22,7 +23,10 @@ namespace WarehouseManagement.Controllers
     [ApiController]
     public class WarehouseRecordsController : ControllerBase
     {
-        //显示出库和入库的对应数量
+        /// <summary>
+        /// 显示出库和入库的对应数量
+        /// </summary>
+        /// <returns></returns>
         [Route("showDeliveryAndStorageCount")]
         [HttpGet]
         public IActionResult ShowDeliveryAndStorageCount()
@@ -31,10 +35,10 @@ namespace WarehouseManagement.Controllers
             {
                 var ctx = new DB();
                 var deliveryCount = ctx.WarehouseRecords.Include(u => u.RecordType)
-                    .Where(u => u.RecordTypeId == 1 && u.IsDelete == false).Count();
+                    .Where(u => u.RecordTypeId == 1 && u.RecordStateId == 3).Count();
 
                 var storageCount = ctx.WarehouseRecords.Include(u => u.RecordType)
-                   .Where(u => u.RecordStateId == 2 && u.IsDelete == false).Count();
+                   .Where(u => u.RecordStateId == 2 && u.RecordStateId == 3).Count();
 
                 return Ok(new
                 {
@@ -60,7 +64,10 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //显示总的出入库记录
+        /// <summary>
+        /// 显示总的出入库记录
+        /// </summary>
+        /// <returns></returns>
         [Route("showTotalRecord")]
         [HttpGet]
         public IActionResult ShowTotalRecord()
@@ -74,7 +81,7 @@ namespace WarehouseManagement.Controllers
                   .Include(u => u.User)
                   .Include(u => u.PlaceForStorageDetail)
                   .ThenInclude(u => u.PlaceForStorage)
-                  .Where(u => u.IsDelete == false)
+                  .Where(u => u.RecordStateId == 3)
                   .Select(u => new
                   {
                       u.Id,
@@ -115,7 +122,10 @@ namespace WarehouseManagement.Controllers
 
         }
 
-        //显示未完成的任务
+        /// <summary>
+        /// 显示未完成的任务
+        /// </summary>
+        /// <returns></returns>
         [Route("showUnFinishedTask")]
         [HttpGet]
         public IActionResult ShowUnFinishedTask()
@@ -125,7 +135,7 @@ namespace WarehouseManagement.Controllers
                     .Include(u => u.RecordState)
                     .Include(u => u.Item)
                     .Include(u => u.PlaceForStorageDetail)
-                    .Where(u => u.RecordStateId == 1 && u.IsDelete == false)
+                    .Where(u => u.RecordStateId == 1 && u.RecordStateId == 3)
                     .Select(u => new
                     {
                         u.Id,
@@ -151,7 +161,11 @@ namespace WarehouseManagement.Controllers
             });
         }
 
-        //添加新的记录
+        /// <summary>
+        /// 添加新的记录
+        /// </summary>
+        /// <param name="record"></param>
+        /// <returns></returns>
         [Route("addRecord")]
         [HttpPost]
         public IActionResult AddRecord([FromBody] RecordData record)
@@ -159,7 +173,7 @@ namespace WarehouseManagement.Controllers
             var ctx = new DB();
             if (record.RecordTypeId == 1)
             {
-                if (ctx.WarehouseRecords.Where(u => u.RecordTypeId == 2).Sum(u => u.ItemCount) - ctx.WarehouseRecords.Where(u => u.RecordTypeId == 1).Sum(u => u.ItemCount) < record.ItemCount)
+                if (ctx.WarehouseRecords.ToList().Totallize() < record.ItemCount)
                 {
                     return BadRequest(new
                     {
@@ -183,7 +197,6 @@ namespace WarehouseManagement.Controllers
                     RecordStateId = 1,
                     UserId = record.UserId == -1 ? null : record.UserId,
                     PlaceForStorageDetailId = record.PlaceForStorageDetailId,
-                    IsDelete = false
                 };
                 ctx.WarehouseRecords.Add(addInfo);
                 ctx.SaveChanges();
@@ -206,7 +219,6 @@ namespace WarehouseManagement.Controllers
                             UserId = record.UserId == null ? null : record.UserId,
                             Note = record.Note,
                             OperationTime = record.CreateTime,
-                            IsDelete = false
                         });
                         ctx.SaveChanges();
                     }
@@ -231,7 +243,11 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //更改记录
+        /// <summary>
+        /// 更改记录
+        /// </summary>
+        /// <param name="record"></param>
+        /// <returns></returns>
         [Route("editRecord")]
         [HttpPost]
         public IActionResult EditRecord([FromBody] RecordData record)
@@ -272,7 +288,7 @@ namespace WarehouseManagement.Controllers
                 recordInfo.CreateTime = record.CreateTime;
                 recordInfo.EndTime = record.EndTime;
                 recordInfo.FinishedTime = record.FinishedTime;
-                recordInfo.IsDelete = record.IsDelete;
+                recordInfo.RecordStateId = 3;
                 recordInfo.PlaceForStorageDetailId = record.PlaceForStorageDetailId;
                 ctx.SaveChanges();
 
@@ -296,7 +312,11 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //申请对应的记录
+        /// <summary>
+        /// 申请对应的记录
+        /// </summary>
+        /// <param name="record"></param>
+        /// <returns></returns>
         [Route("applicationRecord")]
         [HttpPost]
         public IActionResult ApplicationRecord([FromBody] RecordData record)
@@ -317,7 +337,6 @@ namespace WarehouseManagement.Controllers
                         RecordStateId = 4,
                         UserId = record.UserId == -1 ? null : record.UserId,
                         PlaceForStorageDetailId = record.PlaceForStorageDetailId,
-                        IsDelete = false
                     });
                     ctx.SaveChanges();
                     return Ok(new
@@ -365,7 +384,6 @@ namespace WarehouseManagement.Controllers
                     RecordStateId = 4,
                     UserId = record.UserId,
                     PlaceForStorageDetailId = record.PlaceForStorageDetailId,
-                    IsDelete = false
                 });
                 ctx.SaveChanges();
                 return Ok(new
@@ -388,7 +406,11 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //删除任务
+        /// <summary>
+        /// 删除任务
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [Route("deleteTheTask")]
         [HttpPost]
         public IActionResult DeleteTheTask([FromBody] int id)
@@ -396,7 +418,7 @@ namespace WarehouseManagement.Controllers
             var ctx = new DB();
             var deleteInfo = ctx.WarehouseRecords.ToList()
                 .FirstOrDefault(u => u.Id == id);
-            deleteInfo.IsDelete = true;
+            deleteInfo.RecordStateId = 3;
             ctx.SaveChanges();
             return Ok(new
             {
@@ -407,7 +429,11 @@ namespace WarehouseManagement.Controllers
             });
         }
 
-        //批准任务
+        /// <summary>
+        /// 批准任务
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [Route("approvalTask")]
         [HttpPost]
         public IActionResult ApprovalTask([FromBody] int id)
@@ -428,7 +454,11 @@ namespace WarehouseManagement.Controllers
             });
         }
 
-        //显示任务详情
+        /// <summary>
+        /// 显示任务详情
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [Route("showTaskDetail")]
         [HttpPost]
         public IActionResult showTaskDetail([FromBody] int id)
@@ -441,7 +471,7 @@ namespace WarehouseManagement.Controllers
                     .Include(u => u.Item)
                     .Include(u => u.User)
                     .Include(u => u.PlaceForStorageDetail).ToList()
-                .FirstOrDefault(u => u.Id == id && u.IsDelete == false);
+                .FirstOrDefault(u => u.Id == id && u.RecordStateId == 3);
                 if (taskDetailInfo == null)
                 {
                     return BadRequest(new
@@ -482,7 +512,10 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //显示最近的50条数据
+        /// <summary>
+        /// 显示最近的50条数据
+        /// </summary>
+        /// <returns></returns>
         [Route("show50Record")]
         [HttpGet]
         public IActionResult Show50Record()
@@ -497,7 +530,7 @@ namespace WarehouseManagement.Controllers
                     .Include(u => u.User)
                     .Include(u => u.PlaceForStorageDetail).ToList()
                     .OrderByDescending(u => u.CreateTime)
-                .Where(u => u.IsDelete == false)
+                .Where(u => u.RecordStateId != 3)
                 .Take(50)
                 .Select(u => new
                 {
@@ -535,7 +568,11 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //显示查找的记录
+        /// <summary>
+        /// 显示查找的记录
+        /// </summary>
+        /// <param name="searchData"></param>
+        /// <returns></returns>
         [Route("showSearchRecord")]
         [HttpPost]
         public IActionResult ShowSearchRecord([FromBody] SearchData searchData)
@@ -549,7 +586,7 @@ namespace WarehouseManagement.Controllers
                 .Include(u => u.User)
                 .Include(u => u.PlaceForStorageDetail)
                 .ThenInclude(u => u.PlaceForStorage).ToList()
-                .Where(u => u.IsDelete == false && searchData.UserId == 0 ? true :
+                .Where(u => u.RecordStateId != 3 && searchData.UserId == 0 ? true :
                 u.UserId == searchData.UserId && searchData.ItemId == 0 ? true :
                 u.ItemId == searchData.ItemId && searchData.PlaceForStorageId == 0 ? true :
                 u.PlaceForStorageDetailId == searchData.PlaceForStorageId && (string.IsNullOrEmpty(searchData.StartTime) ||
@@ -585,7 +622,11 @@ namespace WarehouseManagement.Controllers
             });
         }
 
-        //显示记录详情
+        /// <summary>
+        /// 显示记录详情
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [Route("showRecordDetail")]
         [HttpPost]
         public IActionResult ShowRecordDetail([FromBody] int id)
@@ -598,7 +639,7 @@ namespace WarehouseManagement.Controllers
                    .Include(u => u.User)
                    .Include(u => u.RecordState)
                    .Include(u => u.RecordType)
-                   .FirstOrDefault(u => u.IsDelete == false && u.Id == id);
+                   .FirstOrDefault(u => u.RecordStateId != 3 && u.Id == id);
                 if (recordInfo == null)
                 {
                     return BadRequest(new
@@ -626,7 +667,6 @@ namespace WarehouseManagement.Controllers
                         CreateTime = recordInfo.CreateTime,
                         FinishedTime = recordInfo.FinishedTime,
                         UserId = recordInfo.UserId,
-                        IsDelete = recordInfo.IsDelete,
                         Note = recordInfo.Note,
                     }
                 });
@@ -643,7 +683,11 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //显示我的未完成任务
+        /// <summary>
+        /// 显示我的未完成任务
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
         [Route("showMyUnfinishedTasks")]
         [HttpPost]
         public IActionResult ShowMyUnfinishedTasks([FromBody] int userId)
@@ -655,7 +699,7 @@ namespace WarehouseManagement.Controllers
                  .Include(u => u.RecordState)
                  .Include(u => u.Item)
                  .Include(u => u.PlaceForStorageDetail)
-                 .Where(u => u.RecordStateId == 1 && u.IsDelete == false && u.UserId == userId)
+                 .Where(u => u.RecordStateId == 1 && u.RecordStateId != 3 && u.UserId == userId)
                  .Select(u => new
                  {
                      RecordId = u.Id,
@@ -685,7 +729,10 @@ namespace WarehouseManagement.Controllers
             }
         }
 
-        //录入数据记录
+        /// <summary>
+        /// 录入数据记录
+        /// </summary>
+        /// <returns></returns>
         [Route("showEnterDataRecord")]
         [HttpPost]
         public IActionResult ShowEnterDataRecord()
@@ -697,7 +744,7 @@ namespace WarehouseManagement.Controllers
                  .Include(u => u.RecordState)
                  .Include(u => u.Item)
                  .Include(u => u.PlaceForStorageDetail)
-                 .Where(u => u.RecordStateId != 1 && u.UserId == null && u.IsDelete == false)
+                 .Where(u => u.RecordStateId != 1 && u.UserId == null && u.RecordStateId != 3)
                  .Select(u => new
                  {
                      RecordId = u.Id,
@@ -779,34 +826,7 @@ namespace WarehouseManagement.Controllers
         //}
     }
 }
-public class RecordData
-{
-    public int? Id { set; get; }
-    public int RecordTypeId { set; get; }
-    public int ItemId { set; get; }
-    public int ItemCount { set; get; }
-    public int RecordStateId { set; get; }
-    public string Note { set; get; }
-    public DateTime CreateTime { set; get; }
-    public DateTime EndTime { set; get; }
-    public DateTime? FinishedTime { set; get; }
-    public int? UserId { set; get; }
-    public int PlaceForStorageDetailId { set; get; }
-    public bool IsDelete { set; get; }
-}
 
-public class SearchData
-{
-    public int UserId { set; get; }
-    public int ItemId { set; get; }
-    public int PlaceForStorageId { set; get; }
-    public string? StartTime { set; get; }
-    public string? EndTime { set; get; }
 
-}
-public class ToJson
-{
-    public string Key { get; set; }
-    public string Value { get; set; }
-}
+
 
