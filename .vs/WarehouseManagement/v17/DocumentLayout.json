@@ -3,7 +3,7 @@
   "WorkspaceRootPath": "D:\\WarehouseManagement\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|D:\\WarehouseManagement\\warehousemanagement\\controllers\\warehouserecordscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|d:\\warehousemanagement\\warehousemanagement\\controllers\\warehouserecordscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{0A9022C7-550E-4199-BBBC-6D8F8C673368}|WarehouseManagement\\WarehouseManagement.csproj|solutionrelative:warehousemanagement\\controllers\\warehouserecordscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -32,7 +32,7 @@
               "RelativeDocumentMoniker": "WarehouseManagement\\Controllers\\WarehouseRecordsController.cs",
               "ToolTip": "D:\\WarehouseManagement\\WarehouseManagement\\Controllers\\WarehouseRecordsController.cs",
               "RelativeToolTip": "WarehouseManagement\\Controllers\\WarehouseRecordsController.cs",
-              "ViewState": "AQIAALoCAAAAAAAAAAAgwOcCAAArAAAA",
+              "ViewState": "AQIAAKYAAAAAAAAAAAAAwJoCAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-21T01:23:01.233Z",
               "EditorCaption": ""
