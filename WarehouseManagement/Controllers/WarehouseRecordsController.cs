@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.IdentityModel.Abstractions;
 using Microsoft.VisualBasic;
 using System.Net.WebSockets;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using System.Xml.Linq;
 using WarehouseManagement.Controllers;
@@ -809,57 +810,43 @@ namespace WarehouseManagement.Controllers
             }
         }
 
+        /// <summary>
+        /// 用来批量审批
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
+        [HttpPost("reviewBatchTask")]
+        public IActionResult ReviewBatchTask([FromBody] List<ReviewBatchTask> task)
+        {
+            var ctx = new DB();
+            try
+            {
+                foreach (var item in task)
+                {
+                    var recordInfo = ctx.WarehouseRecords.FirstOrDefault(u => u.Id == item.Id);
+                    recordInfo.RecordStateId = item.stateId;
+                    ctx.SaveChanges();
+                }
 
-        //更新异常数据
-        //public void UpdateAbnormalData()
-        //{
-        //    var ctx = new DB();
-        //    try
-        //    {
-        //        var abnormalInfo = ctx.WarehouseRecords.Include(u => u.Item)
-        //            .Include(u => u.RecordType)
-        //            .Include(u => u.RecordState)
-        //            .Include(u => u.User)
-        //            .Include(u => u.PlaceForStorageDetail)
-        //            .ThenInclude(u => u.PlaceForStorage)
-        //            .Include(u => u.FixedAssets)
-        //            .Where(u => u.IsDelete == false)
-        //            .GroupBy(u => u.Item)
-        //            .Select(u => new
-        //            {
-        //                u.Key,
-        //                TotalCount = u.Sum(u => u.ItemCount),
-        //                SafeStock = ctx.Items.ToList().FirstOrDefault(c => c.Id == u.Key.Id).SafetyInventory
-        //            }).ToList();
-
-        //        foreach (var item in abnormalInfo)
-        //        {
-        //            if (item.TotalCount < item.SafeStock)
-        //            {
-        //                ctx.ItemAndStates.Add(new ItemAndState
-        //                {
-        //                    ItemId = item.Key.Id,
-        //                    HazardRecordDetailId = 1,
-        //                    HazardStateId = 1
-        //                });
-        //                ctx.SaveChanges();
-        //            }
-
-        //            if (ctx.WarehouseRecords.ToList().OrderBy(u =>u.CreateTime).FirstOrDefault(u => u.ItemId == item.Key.Id).CreateTime >= DateTime.Now)
-        //            {
-        //                ctx.WarehouseRecords.ToList().Add(new WarehouseRecord
-        //                {
-        //                    //RecordState =
-        //                });
-        //            }
-        //        }
-
-        //    }
-        //    catch
-        //    {
-        //        return;
-        //    }
-        //}
+                return Ok(new
+                {
+                    Success = true,
+                    Message = "审批成功",
+                    Timestamp = DateTime.UtcNow,
+                    Data = -1
+                });
+            }
+            catch
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    Message = "审批失败",
+                    Timestamp = DateTime.UtcNow,
+                    Data = 1
+                });
+            }
+        }
     }
 }
 
