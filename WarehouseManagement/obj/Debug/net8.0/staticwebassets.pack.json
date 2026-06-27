@@ -1,0 +1,33 @@
+{
+  "Files": [
+    {
+      "Id": "D:\\WarehouseManagement\\WarehouseManagement\\wwwroot\\src\\e33a7977-2f56-434f-8763-4bf889cc1d55.txt",
+      "PackagePath": "staticwebassets\\src\\e33a7977-2f56-434f-8763-4bf889cc1d55.txt"
+    },
+    {
+      "Id": "D:\\WarehouseManagement\\WarehouseManagement\\wwwroot\\src\\p1.png",
+      "PackagePath": "staticwebassets\\src\\p1.png"
+    },
+    {
+      "Id": "D:\\WarehouseManagement\\WarehouseManagement\\wwwroot\\src\\标签.xlsx",
+      "PackagePath": "staticwebassets\\src\\标签.xlsx"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.WarehouseManagement.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.WarehouseManagement.props",
+      "PackagePath": "build\\WarehouseManagement.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.WarehouseManagement.props",
+      "PackagePath": "buildMultiTargeting\\WarehouseManagement.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.WarehouseManagement.props",
+      "PackagePath": "buildTransitive\\WarehouseManagement.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

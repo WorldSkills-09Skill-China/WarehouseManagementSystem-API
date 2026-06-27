@@ -9,9 +9,11 @@ namespace WarehouseManagement.Controllers
     [ApiController]
     public class RecordStatesController : ControllerBase
     {
-        //显示记录状态列表
-        [Route("showRecordStates")]
-        [HttpGet]
+        /// <summary>
+        /// 显示记录状态列表
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("showRecordStates")]
         public IActionResult ShowRecordStates()
         {
             var ctx = new DB();

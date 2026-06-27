@@ -11,9 +11,12 @@ namespace WarehouseManagement.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        //用户登录
-        [Route("login")]
-        [HttpPost]
+        /// <summary>
+        /// 用户登录
+        /// </summary>
+        /// <param name="login"></param>
+        /// <returns></returns>
+        [HttpPost("login")]
         public IActionResult Login([FromBody] LoginData login)
         {
             var ctx = new DB();
@@ -52,13 +55,16 @@ namespace WarehouseManagement.Controllers
                 {
                     Id = loginInfo.Id,
                     RoleId = loginInfo.RoleId,
+                    UserName = loginInfo.Name
                 }
             });
         }
 
-        //用户列表
-        [Route("showUserList")]
-        [HttpGet]
+        /// <summary>
+        /// 用户列表
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("showUserList")]
         public IActionResult ShowUserList()
         {
             var ctx = new DB();
@@ -76,11 +82,5 @@ namespace WarehouseManagement.Controllers
                 Data = userList
             });
         }
-    }
-
-    public class LoginData
-    {
-        public string Name { set; get; }
-        public string Password { set; get; }
     }
 }
