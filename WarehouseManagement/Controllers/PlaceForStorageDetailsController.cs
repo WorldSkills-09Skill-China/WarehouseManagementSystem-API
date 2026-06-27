@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 using WarehouseManagement.EFCore;
 
 namespace WarehouseManagement.Controllers
@@ -14,18 +15,22 @@ namespace WarehouseManagement.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet("showAllLocation")]
-        public IActionResult ShowAllLocation()
+        public IActionResult ShowAllLocation(int id, int batch)
         {
             var ctx = new DB();
             try
             {
-                var locationInfo = ctx.PlaceForStorageDetails.Include(u => u.PlaceForStorage)
+                var locationInfo = ctx.PlaceForStorageDetails
+                    .Include(u => u.PlaceForStorage)
+                    .Include(u => u.WarehouseRecords)
                     .ToList()
-                               .Select(u => new
-                               {
-                                   u.Id,
-                                   Name = u.PlaceForStorage.Name + "-" + u.Name
-                               }).ToList();
+                    .Where(u => (u.WarehouseRecords.Any(b => b.ItemId == id) || id == -1) && (u.WarehouseRecords.Any(b => b.Batch == batch) || batch == -1))
+                    .ToList()
+                    .Select(u => new
+                    {
+                        u.Id,
+                        Name = u.PlaceForStorage.Name + "-" + u.Name
+                    }).ToList();
                 return Ok(new
                 {
                     Success = true,
@@ -46,6 +51,25 @@ namespace WarehouseManagement.Controllers
             }
         }
 
+
+        //[HttpPost("showStatePlace")]
+        //public IActionResult ShowStatePlace([FromBody] int id)
+        //{
+        //    var ctx = new DB();
+        //    try
+        //    {
+        //        var placeInfo = ctx.pla
+        //    }
+        //    catch
+        //    {
+
+        //    }
+        //}
+
+        
+
+
+
         /// <summary>
         /// 显示位置对应的图片
         /// </summary>
@@ -57,7 +81,7 @@ namespace WarehouseManagement.Controllers
             var ctx = new DB();
             try
             {
-                var locationInfo = ctx.PlaceForStorageDetails.Include(u =>u.PlaceForStorage)
+                var locationInfo = ctx.PlaceForStorageDetails.Include(u => u.PlaceForStorage)
                     .ToList()
                      .FirstOrDefault(u => u.Id == id);
                 if (locationInfo == null)

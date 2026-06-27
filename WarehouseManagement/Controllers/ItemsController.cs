@@ -19,6 +19,8 @@ using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using System.Reflection.Metadata.Ecma335;
 using WarehouseManagement.ItemsClass;
+using System.Linq;
+using DocumentFormat.OpenXml.EMMA;
 
 
 namespace WarehouseManagement.Controllers
@@ -50,7 +52,8 @@ namespace WarehouseManagement.Controllers
                     ItemTypeId = u.ItemTypeId,
                     SafeCount = u.SafetyInventory,
                     ImageFileName = u.Image,
-                    IsFixedAssetpublic = u.IsFixedAssets
+                    IsFixedAssetpublic = u.IsFixedAssets,
+                    Unit = u.Unit
                 }).FirstOrDefault();
 
                 return Ok(new
@@ -251,29 +254,92 @@ namespace WarehouseManagement.Controllers
             var ctx = new DB();
             try
             {
-                var addInfo = new Item
+
+                var folder = Path.Combine(_whe.WebRootPath, "image", "itemimage");
+                Directory.CreateDirectory(folder);
+
+                string fileName = Guid.NewGuid() + ".png";
+                string fullPath = Path.Combine(folder, fileName);
+                if (data.ImageFile != null)
+                {
+                    if (!string.IsNullOrEmpty(data.ImageFile))
+                    {
+                        var bytes = Convert.FromBase64String(data.ImageFile);
+                        System.IO.File.WriteAllBytes(fullPath, bytes);
+                    }
+                }
+
+                var item = new Item
                 {
                     Name = data.ItemName,
                     ItemTypeId = data.ItemTypeId,
                     SafetyInventory = data.SafeCount,
-                    Image = data.ImageFileName,
+                    Image = data.ImageFile == null ? null : $"/image/itemimage/{fileName}",
                     IsFixedAssets = data.IsFixedAsset,
+                    Unit = data.Unit,
                     IsDelete = false
                 };
-                ctx.Items.Add(addInfo);
+                ctx.Items.Add(item);
                 ctx.SaveChanges();
-
-                if (data.IsFixedAsset == true)
+                if (data.AddFixedAssets.Count > 0)
                 {
-                    foreach (var item in data.AddFixedAssets)
+                    foreach (var fixedAsset in data.AddFixedAssets)
                     {
                         ctx.FixedAssets.Add(new FixedAsset
                         {
-                            Code = item.Code,
-                            ItemId = addInfo.Id,
+                            Code = fixedAsset.Code,
+                            ItemId = item.Id,
+                            FixedAssetDetailId = fixedAsset.SpecificationId == 0 ? 1 : fixedAsset.SpecificationId,
                             IsDelete = false
                         });
+                        ctx.SaveChanges();
                     }
+                }
+                foreach (var place in data.PlaceForStorageDetailIdChangedFixedAsset.GroupBy(a => a.Value))
+                {
+
+                    var warehouseRecord = new WarehouseRecord
+                    {
+                        RecordStateId = 2,
+                        ItemId = item.Id,
+                        ItemCount = place.Count(),
+                        Note = null,
+                        CreateTime = DateTime.Now,
+                        EndTime = DateTime.Now.AddDays(10),
+                        FinishedTime = null,
+                        RecordTypeId = 2,
+                        UserId = null,
+                        PlaceForStorageDetailId = Convert.ToInt32(place.Key.Split('|')[1]),
+                        Batch = 1,
+                    };
+                    ctx.WarehouseRecords.Add(warehouseRecord);
+                    ctx.SaveChanges();
+                    foreach (var code in place)
+                    {
+                        var fixedAsset = ctx.FixedAssets.ToList().FirstOrDefault(a => a.Code == code.Key);
+                        fixedAsset.WarehouseRcordId = warehouseRecord.Id;
+                        ctx.SaveChanges();
+                        ctx.AssetHistories.Add(new AssetHistory
+                        {
+                            FixedAssetId = fixedAsset.Id,
+                            WarehouseRecordId = warehouseRecord.Id,
+                            UserId = null,
+                            OperationTime = DateTime.Now,
+                        });
+                        ctx.SaveChanges();
+                    }
+                }
+
+                foreach (var fixedAsset in data.UserChangedFixedAsset)
+                {
+                    var fixedAssetId = ctx.FixedAssets.FirstOrDefault(a => a.Code == fixedAsset.Key).Id;
+                    ctx.AssetHistories.Add(new AssetHistory
+                    {
+                        FixedAssetId = fixedAssetId,
+                        WarehouseRecordId = null,
+                        UserId = Convert.ToInt32(fixedAsset.Value.Split('|')[1]),
+                        OperationTime = DateTime.Now,
+                    });
                     ctx.SaveChanges();
                 }
 
@@ -282,17 +348,17 @@ namespace WarehouseManagement.Controllers
                     Success = true,
                     Message = "",
                     Timestamp = DateTime.UtcNow,
-                    Data = addInfo.Id
+                    Data = (string)null
                 });
             }
-            catch
+            catch (System.Exception ex)
             {
-                return BadRequest(new
+                return Ok(new
                 {
                     Success = false,
-                    Message = "fail to add",
+                    Message = ex.Message,
                     Timestamp = DateTime.UtcNow,
-                    Data = (string)null
+                    Data = ""
                 });
             }
         }
@@ -320,24 +386,94 @@ namespace WarehouseManagement.Controllers
                         Data = (string)null
                     });
                 }
+                var maxBatchRecord = ctx.WarehouseRecords.ToList()
+                    .Where(a => a.ItemId == data.Id).ToList()
+                    .OrderBy(a => a.Batch).ToList()
+                    .LastOrDefault();
+
+                if (data.ImageFile != null)
+                {
+                    var folder = Path.Combine(_whe.WebRootPath, "image", "itemimage");
+                    Directory.CreateDirectory(folder);
+
+                    string fileName = Guid.NewGuid() + ".png";
+                    string fullPath = Path.Combine(folder, fileName);
+                    if (!string.IsNullOrEmpty(data.ImageFile))
+                    {
+                        var bytes = Convert.FromBase64String(data.ImageFile);
+                        System.IO.File.WriteAllBytes(fullPath, bytes);
+                    }
+                    itemInfo.Image = $"/image/itemimage/{fileName}";
+                }
                 itemInfo.Name = data.ItemName;
                 itemInfo.ItemTypeId = data.ItemTypeId;
                 itemInfo.SafetyInventory = data.SafeCount;
-                itemInfo.Image = data.ImageFileName;
+                itemInfo.Unit = data.Unit;
                 ctx.SaveChanges();
 
                 if (data.IsFixedAsset == true)
                 {
-                    foreach (var item in data.AddFixedAssets)
+                    if (data.AddFixedAssets.Count > 0)
                     {
-                        ctx.FixedAssets.Add(new FixedAsset
+                        foreach (var fixedAsset in data.AddFixedAssets)
                         {
-                            Code = item.Code,
-                            ItemId = item.ItemId,
-                            IsDelete = false
-                        });
+                            ctx.FixedAssets.Add(new FixedAsset
+                            {
+                                Code = fixedAsset.Code,
+                                ItemId = itemInfo.Id,
+                                FixedAssetDetailId = fixedAsset.SpecificationId == 0 ? 1 : fixedAsset.SpecificationId,
+                                IsDelete = false
+                            });
+                            ctx.SaveChanges();
+                        }
                     }
-                    ctx.SaveChanges();
+                    foreach (var place in data.PlaceForStorageDetailIdChangedFixedAsset.GroupBy(a => a.Value))
+                    {
+
+                        var warehouseRecord = new WarehouseRecord
+                        {
+                            RecordStateId = 2,
+                            ItemId = itemInfo.Id,
+                            ItemCount = place.Count(),
+                            Note = null,
+                            CreateTime = DateTime.Now,
+                            EndTime = DateTime.Now.AddDays(10),
+                            FinishedTime = null,
+                            RecordTypeId = 2,
+                            UserId = null,
+                            PlaceForStorageDetailId = Convert.ToInt32(place.Key.Split('|')[1]),
+                            Batch = 1,
+                        };
+                        ctx.WarehouseRecords.Add(warehouseRecord);
+                        ctx.SaveChanges();
+                        foreach (var code in place)
+                        {
+                            var fixedAsset = ctx.FixedAssets.ToList().FirstOrDefault(a => a.Code == code.Key);
+                            fixedAsset.WarehouseRcordId = warehouseRecord.Id;
+                            ctx.SaveChanges();
+                            ctx.AssetHistories.Add(new AssetHistory
+                            {
+                                FixedAssetId = fixedAsset.Id,
+                                WarehouseRecordId = warehouseRecord.Id,
+                                UserId = null,
+                                OperationTime = DateTime.Now,
+                            });
+                            ctx.SaveChanges();
+                        }
+                    }
+
+                    foreach (var fixedAsset in data.UserChangedFixedAsset)
+                    {
+                        var fixedAssetId = ctx.FixedAssets.FirstOrDefault(a => a.Code == fixedAsset.Key).Id;
+                        ctx.AssetHistories.Add(new AssetHistory
+                        {
+                            FixedAssetId = fixedAssetId,
+                            WarehouseRecordId = null,
+                            UserId = Convert.ToInt32(fixedAsset.Value.Split('|')[1]),
+                            OperationTime = DateTime.Now,
+                        });
+                        ctx.SaveChanges();
+                    }
 
                     if (data.DeleteFixedAssets.Count > 0)
                     {
@@ -512,21 +648,24 @@ namespace WarehouseManagement.Controllers
             {
                 var assetHistoryInfo = ctx.AssetHistories
                     .Include(u => u.User)
-                    .Include(u => u.PlaceForStorageDetail)
+                    .Include(u => u.WarehouseRecord)
+                    .ThenInclude(u => u.PlaceForStorageDetail)
                     .ThenInclude(u => u.PlaceForStorage)
                     .Include(u => u.FixedAsset)
                     .ThenInclude(u => u.Item)
                     .Include(u => u.FixedAsset)
                     .ThenInclude(u => u.WarehouseRcord).ToList()
-                    .Where(u => u.FixedAsset.Code == id && u.OperationTime >= first && u.OperationTime <= end)
+                    .Where(u => u.FixedAsset.Code == id
+                    && u.OperationTime >= first
+                    && u.OperationTime <= end
+                    && ((u.WarehouseRecord != null && u.WarehouseRecord.RecordStateId == 2) || u.UserId != null))
                     .Select(u => new
                     {
                         ItemName = u.FixedAsset.Item.Name,
                         Code = u.FixedAsset.Code,
                         UserName = u.UserId == null ? null : u.User.Name,
-                        u.Note,
                         u.OperationTime,
-                        PlaceForStorageDetail = u.PlaceForStorageDetailId == null ? null : u.PlaceForStorageDetail.PlaceForStorage.Name + "-" + u.PlaceForStorageDetail.Name
+                        PlaceForStorageDetail = u.WarehouseRecord.PlaceForStorageDetailId == null ? null : u.WarehouseRecord.PlaceForStorageDetail.PlaceForStorage.Name + "-" + u.WarehouseRecord.PlaceForStorageDetail.Name,
                     }).ToList();
                 return Ok(new
                 {
@@ -562,8 +701,13 @@ namespace WarehouseManagement.Controllers
                 var fixedAssetInfo = ctx.FixedAssets
                     .Include(u => u.Item)
                     .Include(u => u.AssetHistories)
+                    .ThenInclude(u => u.WarehouseRecord)
                     .ThenInclude(u => u.PlaceForStorageDetail)
                     .ThenInclude(u => u.PlaceForStorage)
+                    .Include(u => u.FixedAssetDetail)
+                    .Include(u => u.WarehouseRcord)
+                    .Include(u => u.AssetHistories)
+                    .ThenInclude(u => u.User)
                     .ToList()
                     .Where(u => u.ItemId == id && u.IsDelete == false)
                     .Select(u =>
@@ -577,9 +721,11 @@ namespace WarehouseManagement.Controllers
                             assetHistoryInfo.User.Name,
                             ItemName = u.Item.Name,
                             PlaceForStorageDetail = assetHistoryInfo == null ? null :
-                            assetHistoryInfo.PlaceForStorageDetailId == null ? null :
-                            assetHistoryInfo.PlaceForStorageDetail.PlaceForStorage.Name + "-" +
-                            assetHistoryInfo.PlaceForStorageDetail.Name,
+                            assetHistoryInfo.WarehouseRecord == null ? null :
+                            assetHistoryInfo.WarehouseRecord.PlaceForStorageDetail.PlaceForStorage.Name + "-" +
+                            assetHistoryInfo.WarehouseRecord.PlaceForStorageDetail.Name,
+                            Batch = u.WarehouseRcord?.Batch,
+                            Specification = u.FixedAssetDetail.Specification
                         };
                     }).ToList();
 
@@ -770,7 +916,7 @@ namespace WarehouseManagement.Controllers
                     Data = new
                     {
                         ImageName = itemInfo.Image,
-                        IsFixedAsset = itemInfo.IsFixedAssets == null ? false : true,
+                        IsFixedAsset = itemInfo.IsFixedAssets,
                     }
                 });
             }
@@ -801,7 +947,7 @@ namespace WarehouseManagement.Controllers
                 ctx.AssetHistories.Add(new AssetHistory
                 {
                     FixedAssetId = fixedAssets.Id,
-                    PlaceForStorageDetailId = fixedAssets.AssetHistories.OrderByDescending(u => u.OperationTime).FirstOrDefault(u => u.FixedAssetId == fixedAssets.Id).PlaceForStorageDetailId,
+                    WarehouseRecordId = fixedAssets.AssetHistories.OrderByDescending(u => u.OperationTime).FirstOrDefault(u => u.FixedAssetId == fixedAssets.Id).WarehouseRecordId,
                     UserId = change.userId,
                     OperationTime = DateTime.Now,
                 });
@@ -838,8 +984,13 @@ namespace WarehouseManagement.Controllers
             var ctx = new DB();
             try
             {
-                var itemInfo = ctx.AssetHistories.Include(u => u.FixedAsset)
-                    .Include(u => u.User).ToList()
+                var itemInfo = ctx.AssetHistories
+                    .Include(u => u.FixedAsset)
+                    .Include(u => u.User)
+                    .Include(u => u.WarehouseRecord)
+                    .ThenInclude(u => u.PlaceForStorageDetail)
+                    .ThenInclude(u => u.PlaceForStorage)
+                    .ToList()
                     .OrderByDescending(u => u.OperationTime)
                     .FirstOrDefault(u => u.FixedAsset.Code == code);
                 if (itemInfo == null)
@@ -861,7 +1012,7 @@ namespace WarehouseManagement.Controllers
                     {
                         ItemName = itemInfo.User == null ? null : itemInfo.User.Name,
                         ItemType = itemInfo.FixedAsset.Item.ItemType,
-                        PlaceForStorage = itemInfo.PlaceForStorageDetail
+                        PlaceForStorage = itemInfo.WarehouseRecord.PlaceForStorageDetail.PlaceForStorage.Name + "-" + itemInfo.WarehouseRecord.PlaceForStorageDetail.Name
                     }
                 });
             }
@@ -937,7 +1088,7 @@ namespace WarehouseManagement.Controllers
                 {
                     var itemTypeId = ctx.ItemTypes.ToList().FirstOrDefault(u => u.Name == item.ItemType);
                     var placeForStorageId = ctx.PlaceForStorageDetails.Include(u => u.PlaceForStorage).ToList()
-                        .FirstOrDefault(u => u.PlaceForStorage.Name + "-" + u.Name == item.PlaceForStorageDetail);
+                        .FirstOrDefault(u => u.PlaceForStorage.Name + u.Name == item.PlaceForStorageDetail);
 
                     if (itemTypeId == null || placeForStorageId == null)
                     {
@@ -956,6 +1107,7 @@ namespace WarehouseManagement.Controllers
                         ItemTypeId = itemTypeId.Id,
                         SafetyInventory = item.SafeCount,
                         IsDelete = false,
+                        Unit = item.Unit,
                         IsFixedAssets = true
                     };
                     ctx.Items.Add(addItemInfo);
@@ -1005,9 +1157,8 @@ namespace WarehouseManagement.Controllers
                             ctx.AssetHistories.Add(new AssetHistory
                             {
                                 FixedAssetId = assets.Id,
-                                PlaceForStorageDetailId = warehouseRecordInfo.PlaceForStorageDetailId,
+                                WarehouseRecordId = warehouseRecordInfo.Id,
                                 UserId = null,
-                                Note = warehouseRecordInfo.Note,
                                 OperationTime = DateTime.UtcNow,
                             });
                             ctx.SaveChanges();
@@ -1020,7 +1171,7 @@ namespace WarehouseManagement.Controllers
                 return Ok(new
                 {
                     Success = true,
-                    Message = "",
+                    Message = "成功添加",
                     TimeStamp = DateTime.UtcNow,
                     Data = (string)null
                 });
@@ -1030,11 +1181,135 @@ namespace WarehouseManagement.Controllers
                 return BadRequest(new
                 {
                     Success = false,
-                    Message = "",
+                    Message = "添加失败",
                     Timestamp = DateTime.UtcNow,
                     Data = (string)null
                 });
             }
+        }
+
+        /// <summary>
+        /// 编辑物品规格
+        /// </summary>
+        /// <param name="items"></param>
+        /// <returns></returns>
+        [HttpPost("editItemSpecification")]
+        public IActionResult EditItemSpecification([FromBody] ItemsSpecification items)
+        {
+            var newFixedAssets = new List<String>();
+            var specificationId = 0;
+            var ctx = new DB();
+            var specification = ctx.FixedAssetDetails.ToList().FirstOrDefault(a => a.Specification == items.Specification);
+            if (specification == null)
+            {
+                var info = new FixedAssetDetail
+                {
+                    Specification = items.Specification,
+                };
+                ctx.FixedAssetDetails.Add(info);
+                ctx.SaveChanges();
+                specificationId = info.Id;
+                foreach (var item in items.CodeList)
+                {
+                    var itemData = ctx.FixedAssets.ToList().FirstOrDefault(a => a.Code == item);
+                    if (itemData != null)
+                    {
+                        itemData.FixedAssetDetailId = info.Id;
+                    }
+                    else
+                    {
+                        newFixedAssets.Add(item);
+                    }
+                }
+                ctx.SaveChanges();
+            }
+            else
+            {
+                specificationId = specification.Id;
+                foreach (var item in items.CodeList)
+                {
+                    var itemData = ctx.FixedAssets.ToList().FirstOrDefault(a => a.Code == item);
+                    if (itemData != null)
+                    {
+                        itemData.FixedAssetDetailId = specification.Id;
+                    }
+                    else
+                    {
+                        newFixedAssets.Add(item);
+                    }
+                }
+                ctx.SaveChanges();
+            }
+
+            return Ok(new
+            {
+                Success = true,
+                Message = "",
+                Timestamp = DateTime.UtcNow,
+                Data = new
+                {
+                    NewFixedAssets = newFixedAssets,
+                    SpecificationId = specificationId
+                }
+            });
+        }
+
+        /// <summary>
+        /// 物品规格
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        [HttpGet("getItemSpecification")]
+        public IActionResult GetItemSpecification(string code)
+        {
+            var ctx = new DB();
+            var specification = ctx.FixedAssetDetails.Include(a => a.FixedAssets).ToList().FirstOrDefault(a => a.FixedAssets.Any(b => b.Code == code)).Specification;
+            return Ok(new
+            {
+                Success = true,
+                Message = "",
+                Timestamp = DateTime.UtcNow,
+                Data = specification
+            });
+        }
+
+        /// <summary>
+        /// 可还批次物品
+        /// </summary>
+        /// <param name="count"></param>
+        /// <param name="batch"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("returnBatchItem")]
+        public IActionResult ReturnBatchItem(int count, int batch, int id)
+        {
+            var ctx = new DB();
+            var batchFixedAssets = ctx.FixedAssets
+                .Include(a => a.WarehouseRcord)
+                .Include(a => a.AssetHistories)
+                .ToList()
+                .Where(a =>
+                a.WarehouseRcordId != null
+                && a.WarehouseRcord.Batch == batch
+                && a.ItemId == id
+                && !a.IsDelete
+                && (a.AssetHistories != null && (a.AssetHistories.ToList().OrderBy(b => b.OperationTime).LastOrDefault().WarehouseRecord.RecordTypeId == 1
+                && a.AssetHistories.ToList().OrderBy(b => b.OperationTime).LastOrDefault().UserId == null))).ToList()
+                .Select(a => new
+                {
+                    ItemName = a.Item.Name,
+                    Code = a.Code,
+                    Batch = a.WarehouseRcord.Batch,
+                    Detail = a.FixedAssetDetail?.Specification
+                }).ToList();
+
+            return Ok(new
+            {
+                Success = true,
+                Message = "",
+                Timestamp = DateTime.UtcNow,
+                Data = batchFixedAssets
+            });
         }
     }
 }
